@@ -15,7 +15,7 @@ func BlockParsers() []util.PrioritizedValue {
 	return []util.PrioritizedValue{
 		util.Prioritized(defaultFencedCodeBlockParser, 10),
 		util.Prioritized(parser.NewATXHeadingParser(), 100),
-		util.Prioritized(parser.NewListParser(), 300),
+		util.Prioritized(newListParser(), 300),
 		util.Prioritized(newListItemParser(), 400),
 		util.Prioritized(blockquote{}, 500),
 		util.Prioritized(paragraph{}, 1000),

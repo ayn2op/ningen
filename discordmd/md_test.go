@@ -22,6 +22,7 @@ func TestParses(t *testing.T) {
 	var tests = []string{
 		">\n```\r",
 		"```\n\n",
+		"+ a\n+ b",
 	}
 
 	for _, test := range tests {
