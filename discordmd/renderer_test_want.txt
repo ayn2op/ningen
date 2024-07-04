@@ -22,7 +22,7 @@ bad codeblock
 
 `mah man
 
-bold and italics
+bold and italics and █████████
 
 heading 1
 =========

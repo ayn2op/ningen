@@ -4,6 +4,7 @@ import (
 	"io"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/renderer"
@@ -100,8 +101,17 @@ func (r *basicRenderWalker) walk(w io.Writer, source []byte, n ast.Node, enter b
 			io.WriteString(w, string(n.URL(source)))
 		}
 	case *Inline:
-		// n.Attr should be used, but since we're in plaintext mode, there is no
-		// formatting.
+		// n.Attr should be used, but since we're in plaintext mode, there
+		// is no formatting except for spoilers.
+		if n.Attr&AttrSpoiler != 0 {
+			if enter {
+				w := spoilerWriter{w}
+				walkChildren(n, func(node ast.Node, enter bool) (ast.WalkStatus, error) {
+					return r.walk(w, source, node, enter), nil
+				})
+			}
+			return ast.WalkSkipChildren
+		}
 	case *Emoji:
 		if enter {
 			io.WriteString(w, ":"+string(n.Name)+":")
@@ -174,4 +184,30 @@ func (r *basicRenderWalker) walk(w io.Writer, source []byte, n ast.Node, enter b
 		}
 	}
 	return ast.WalkContinue
+}
+
+func walkChildren(n ast.Node, walker ast.Walker) error {
+	for child := n.FirstChild(); child != nil; child = child.NextSibling() {
+		if err := ast.Walk(child, walker); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// spoilerWriter is a writer that replaces all printable characters with a
+// spoiler block.
+type spoilerWriter struct {
+	w io.Writer
+}
+
+func (w spoilerWriter) Write(b []byte) (int, error) {
+	for _, r := range string(b) {
+		if unicode.IsPrint(r) {
+			w.w.Write([]byte("█"))
+		} else {
+			w.w.Write([]byte(string(r)))
+		}
+	}
+	return len(b), nil
 }

@@ -22,7 +22,7 @@ func main() {
 
 `mah man
 
-**bold and *italics***
+**bold and *italics*** and ||spoilers!||
 # heading 1
 ## heading 2
 ### heading 3
