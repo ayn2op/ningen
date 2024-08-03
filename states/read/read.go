@@ -3,7 +3,7 @@ package read
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
 	"sync"
 
 	"github.com/diamondburned/arikawa/v3/api"
@@ -235,7 +235,12 @@ func (r *State) markRead(chID discord.ChannelID, msgID discord.MessageID, sendac
 
 func (r *State) ack(chID discord.ChannelID, msgID discord.MessageID) {
 	if err := r.state.Ack(chID, msgID, &api.Ack{}); err != nil {
-		log.Println("Discord: message ack failed:", err)
+		slog.Error(
+			"cannot send message ack to Discord",
+			"module", "ningen",
+			"channel_id", chID,
+			"message_id", msgID,
+			"err", err)
 	}
 }
 

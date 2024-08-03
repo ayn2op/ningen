@@ -3,7 +3,7 @@ package member
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"strconv"
 	"strings"
 	"sync"
@@ -25,7 +25,7 @@ var (
 
 // State handles members and the member list.
 //
-// Members
+// # Members
 //
 // Discord wants all clients to request member information over the gateway
 // instead of using the usual member API endpoint. This makes sense, as it
@@ -36,7 +36,7 @@ var (
 // times the same member. If the gateway has yet to reply or if the state
 // already has the member, the function will not send a command over.
 //
-// Member List
+// # Member List
 //
 // Discord also wants all clients to not use the members (plural) endpoint. In
 // fact, calling this endpoint will immediately unverify the user's email.
@@ -75,7 +75,10 @@ func NewState(state *state.State, h handlerrepo.AddHandler) *State {
 		guilds:     map[discord.GuildID]*Guild{},
 		minFetched: map[discord.ChannelID]int{},
 		OnError: func(err error) {
-			log.Println("ningen: members list error:", err)
+			slog.Warn(
+				"error occurred while handling member list",
+				"module", "ningen",
+				"err", err)
 		},
 		SearchFrequency:  600 * time.Millisecond,
 		SearchLimit:      50,
@@ -287,8 +290,6 @@ func (m *State) RequestMember(guildID discord.GuildID, memberID discord.UserID) 
 			UserIDs:   memberIDs,
 			Presences: m.RequestPresences,
 		})
-
-		log.Println("guild", guildID, "requested", len(memberIDs), "members")
 
 		if err != nil {
 			guild.mut.Lock()

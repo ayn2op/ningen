@@ -5,7 +5,7 @@ package ningen
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"sort"
 	"time"
 
@@ -821,7 +821,11 @@ func (r *State) ChannelIsMuted(chID discord.ChannelID, opts UnreadOpts) bool {
 
 	c, err := r.Cabinet.Channel(chID)
 	if err != nil {
-		log.Println("ningen: ChannelIsMuted: cannot get channel:", err)
+		slog.Warn(
+			"cannot get channel to check if it's muted",
+			"module", "ningen",
+			"channel_id", chID,
+			"err", err)
 		return false
 	}
 

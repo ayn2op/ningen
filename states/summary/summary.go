@@ -3,7 +3,7 @@ package summary
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -73,7 +73,10 @@ func NewState(state *state.State, r handlerrepo.AddHandler) *State {
 	persistentPathInit := sync.OnceFunc(func() {
 		cacheDir, err := os.UserCacheDir()
 		if err != nil {
-			log.Println("ningen: summary: failed to get user cache directory:", err)
+			slog.Info(
+				"cannot get user cache directory so there will be no summary persistence",
+				"module", "ningen",
+				"err", err)
 			return
 		}
 		persistentPath = filepath.Join(cacheDir, "ningen", "summary")
@@ -87,20 +90,32 @@ func NewState(state *state.State, r handlerrepo.AddHandler) *State {
 
 		chPath := filepath.Join(persistentPath, u.ChannelID.String())
 		if err := os.MkdirAll(chPath, 0755); err != nil {
-			log.Println("ningen: summary: failed to create state directory:", err)
+			slog.Warn(
+				"failed to create state directory",
+				"module", "ningen",
+				"path", chPath,
+				"err", err)
 			return
 		}
 
 		for _, summary := range u.Summaries {
 			data, err := json.Marshal(summary)
 			if err != nil {
-				log.Println("ningen: summary: failed to marshal summary:", err)
+				slog.Warn(
+					"failed to marshal summary",
+					"module", "ningen",
+					"summary", summary,
+					"err", err)
 				continue
 			}
 
 			filePath := filepath.Join(chPath, summary.ID.String()+".json")
 			if err := writeToFile(filePath, data); err != nil {
-				log.Println("ningen: summary: failed to write summary:", err)
+				slog.Warn(
+					"failed to write summary",
+					"module", "ningen",
+					"path", filePath,
+					"err", err)
 				continue
 			}
 		}
@@ -112,7 +127,13 @@ func NewState(state *state.State, r handlerrepo.AddHandler) *State {
 
 		files, err := os.ReadDir(chPath)
 		if err != nil {
-			log.Println("ningen: summary: failed to read directory for clean up:", err)
+			if !os.IsNotExist(err) {
+				slog.Warn(
+					"failed to read directory for clean up",
+					"module", "ningen",
+					"path", chPath,
+					"err", err)
+			}
 			return
 		}
 
@@ -120,7 +141,11 @@ func NewState(state *state.State, r handlerrepo.AddHandler) *State {
 		for _, file := range files {
 			id, err := discord.ParseSnowflake(strings.TrimSuffix(file.Name(), ".json"))
 			if err != nil {
-				log.Println("ningen: summary: failed to parse summary ID for clean up:", err)
+				slog.Warn(
+					"failed to parse summary ID from filename for clean up",
+					"module", "ningen",
+					"path", file.Name(),
+					"err", err)
 				continue
 			}
 			fileIDs[file] = id
@@ -147,13 +172,21 @@ func NewState(state *state.State, r handlerrepo.AddHandler) *State {
 
 			deleted++
 			if err := os.Remove(filepath.Join(chPath, file.Name())); err != nil {
-				log.Println("ningen: summary: failed to remove file for clean up:", err)
+				slog.Warn(
+					"failed to remove file for clean up",
+					"module", "ningen",
+					"path", file.Name(),
+					"err", err)
 			}
 		}
 
 		if deleted == len(files) {
 			if err := os.Remove(chPath); err != nil {
-				log.Println("ningen: summary: failed to remove empty directory for clean up:", err)
+				slog.Warn(
+					"failed to remove directory for clean up",
+					"module", "ningen",
+					"path", chPath,
+					"err", err)
 			}
 		}
 	})
@@ -171,7 +204,11 @@ func NewState(state *state.State, r handlerrepo.AddHandler) *State {
 		chDirs, err := os.ReadDir(persistentPath)
 		if err != nil {
 			if !os.IsNotExist(err) {
-				log.Println("ningen: summary: failed to read directory for loading:", err)
+				slog.Warn(
+					"failed to read directory for loading",
+					"module", "ningen",
+					"path", persistentPath,
+					"err", err)
 			}
 			return
 		}
@@ -179,14 +216,22 @@ func NewState(state *state.State, r handlerrepo.AddHandler) *State {
 		for _, chDir := range chDirs {
 			snowflake, err := discord.ParseSnowflake(chDir.Name())
 			if err != nil {
-				log.Println("ningen: summary: failed to parse channel ID for loading:", err)
+				slog.Warn(
+					"failed to parse channel ID for loading",
+					"module", "ningen",
+					"err", err)
 				continue
 			}
 			chID := discord.ChannelID(snowflake)
 
-			summaryFiles, err := os.ReadDir(filepath.Join(persistentPath, chDir.Name()))
+			summariesPath := filepath.Join(persistentPath, chDir.Name())
+			summaryFiles, err := os.ReadDir(summariesPath)
 			if err != nil {
-				log.Println("ningen: summary: failed to read directory for loading:", err)
+				slog.Warn(
+					"failed to read directory for loading",
+					"module", "ningen",
+					"path", summariesPath,
+					"err", err)
 				continue
 			}
 			if len(summaryFiles) == 0 {
@@ -198,7 +243,11 @@ func NewState(state *state.State, r handlerrepo.AddHandler) *State {
 				summaryPath := filepath.Join(persistentPath, chDir.Name(), summaryFile.Name())
 				summary, err := readSummary(summaryPath)
 				if err != nil {
-					log.Println("ningen: summary: failed to read summary for loading:", err)
+					slog.Warn(
+						"failed to read summary for loading",
+						"module", "ningen",
+						"path", summaryPath,
+						"err", err)
 					continue
 				}
 				summaries = append(summaries, *summary)
