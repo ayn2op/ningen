@@ -524,7 +524,7 @@ func (m *State) GetMemberListDirect(guildID discord.GuildID, id string) (*List, 
 
 // onListUpdate is called a bit after RequestGuildMembers if the Channels field
 // is filled. It handles updating the local members list state.
-func (m *State) onListUpdate(ev *gateway.GuildMemberListUpdate) {
+func (m *State) onListUpdate(ev *gateway.GuildMemberListUpdateEvent) {
 	guild := m.guildState(ev.GuildID, true)
 
 	ml := guild.list(ev.ID, true)
@@ -610,7 +610,7 @@ func (m *State) onListUpdate(ev *gateway.GuildMemberListUpdate) {
 
 // onListUpdateState is called when onListUpdate is called, but this one updates
 // the local member/presence state instead.
-func (m *State) onListUpdateState(ev *gateway.GuildMemberListUpdate) {
+func (m *State) onListUpdateState(ev *gateway.GuildMemberListUpdateEvent) {
 	for _, op := range ev.Ops {
 		switch op.Op {
 		case "SYNC", "INSERT", "UPDATE":
