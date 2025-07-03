@@ -759,7 +759,7 @@ func (r *State) SetStatus(status discord.Status, custom *gateway.CustomUserStatu
 		}
 	}
 
-	if err := r.Gateway().Send(r.Context(), &cmd); err != nil {
+	if err := r.SendGateway(r.Context(), &cmd); err != nil {
 		return errors.Wrap(err, "cannot update gateway")
 	}
 
@@ -778,7 +778,7 @@ func (r *State) SetStatus(status discord.Status, custom *gateway.CustomUserStatu
 // user last interacted with Discord. The status is automatically set to idle.
 func (r *State) SetAFK(afk bool, since time.Time) error {
 	if afk {
-		return r.Gateway().Send(r.Context(), &gateway.UpdatePresenceCommand{
+		return r.SendGateway(r.Context(), &gateway.UpdatePresenceCommand{
 			Status:     discord.IdleStatus,
 			Activities: []discord.Activity{},
 			Since:      discord.TimeToMilliseconds(since),
@@ -797,7 +797,7 @@ func (r *State) SetAFK(afk bool, since time.Time) error {
 		return fmt.Errorf("cannot get presences: %w", err)
 	}
 
-	return r.Gateway().Send(r.Context(), &gateway.UpdatePresenceCommand{
+	return r.SendGateway(r.Context(), &gateway.UpdatePresenceCommand{
 		Status:     presences.Status,
 		Activities: presences.Activities,
 		Since:      0,

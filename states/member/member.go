@@ -176,7 +176,7 @@ func (m *State) Subscribe(guildID discord.GuildID) {
 
 	go func() {
 		// Subscribe.
-		err := m.state.Gateway().Send(context.Background(), &gateway.GuildSubscribeCommand{
+		err := m.state.SendGateway(context.Background(), &gateway.GuildSubscribeCommand{
 			GuildID:    guildID,
 			Typing:     true,
 			Threads:    true,
@@ -225,7 +225,7 @@ func (m *State) SearchMember(guildID discord.GuildID, query string) {
 			Limit:     m.SearchLimit,
 		}
 
-		err := m.state.Gateway().Send(context.Background(), search)
+		err := m.state.SendGateway(context.Background(), search)
 
 		if err != nil {
 			m.OnError(errors.Wrap(err, "Failed to search guild members"))
@@ -285,7 +285,7 @@ func (m *State) RequestMember(guildID discord.GuildID, memberID discord.UserID) 
 		guild.mut.Unlock()
 
 		// Fetch everything that wasn't requested.
-		err := m.state.Gateway().Send(context.Background(), &gateway.RequestGuildMembersCommand{
+		err := m.state.SendGateway(context.Background(), &gateway.RequestGuildMembersCommand{
 			GuildIDs:  []discord.GuildID{guildID},
 			UserIDs:   memberIDs,
 			Presences: m.RequestPresences,
@@ -476,7 +476,7 @@ func (m *State) RequestMemberList(
 		guild.subMutex.Unlock() // Do not block IO.
 
 		// Subscribe.
-		err := m.state.Gateway().Send(context.Background(), &gateway.GuildSubscribeCommand{
+		err := m.state.SendGateway(context.Background(), &gateway.GuildSubscribeCommand{
 			GuildID:    guildID,
 			Channels:   guild.subChannels,
 			Typing:     true,
