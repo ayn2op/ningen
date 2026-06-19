@@ -54,12 +54,12 @@ client can use:
 For detailed documentation of each state, see the [reference
 documentation][doc].
 
-[doc]: https://pkg.go.dev/github.com/diamondburned/ningen
+[doc]: https://pkg.go.dev/github.com/ayn2op/ningen
 
 ## Markdown
 
 ningen also provides a built-in Discord Markdown parser using
 [goldmark][goldmark]. For an example on how to implement a custom Markdown
-renderer that is compatible with ningen, see [md/renderer.go](https://github.com/diamondburned/ningen/blob/v1.0.0/md/renderer.go#L36).
+renderer that is compatible with ningen, see [md/renderer.go](https://github.com/ayn2op/ningen/blob/v1.0.0/md/renderer.go#L36).
 
 [goldmark]: https://github.com/yuin/goldmark

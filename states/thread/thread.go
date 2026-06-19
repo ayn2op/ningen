@@ -7,7 +7,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/diamondburned/arikawa/v3/state"
 	"github.com/diamondburned/arikawa/v3/state/store"
-	"github.com/diamondburned/ningen/v3/handlerrepo"
+	"github.com/ayn2op/ningen/v3/handlerrepo"
 )
 
 // State contains additional thread states that are not in the built-in state

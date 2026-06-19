@@ -1,4 +1,4 @@
-module github.com/diamondburned/ningen/v3
+module github.com/ayn2op/ningen/v3
 
 go 1.24.0
 

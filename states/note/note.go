@@ -6,7 +6,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/diamondburned/arikawa/v3/state"
-	"github.com/diamondburned/ningen/v3/handlerrepo"
+	"github.com/ayn2op/ningen/v3/handlerrepo"
 )
 
 type State struct {
