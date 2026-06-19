@@ -1,9 +1,9 @@
-module github.com/diamondburned/ningen/v3
+module github.com/ayn2op/ningen/v3
 
-go 1.24.0
+go 1.25.0
 
 require (
-	github.com/diamondburned/arikawa/v3 v3.6.1-0.20260306005901-b24e0a8447e1
+	github.com/ayn2op/arikawa/v3 v3.0.0-20260619211231-9a7da0c518de
 	github.com/kylelemons/godebug v1.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/twmb/murmur3 v1.1.8
@@ -14,7 +14,5 @@ require (
 require (
 	github.com/gorilla/schema v1.4.1 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
-	golang.org/x/crypto v0.48.0 // indirect
-	golang.org/x/sys v0.41.0 // indirect
-	golang.org/x/time v0.14.0 // indirect
+	golang.org/x/time v0.15.0 // indirect
 )

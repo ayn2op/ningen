@@ -1,6 +1,6 @@
 package ningen
 
-import "github.com/diamondburned/arikawa/v3/discord"
+import "github.com/ayn2op/arikawa/v3/discord"
 
 type readyEventExtras struct {
 	Users             []discord.User `json:"users,omitempty"`

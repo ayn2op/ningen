@@ -3,8 +3,8 @@ package nstore
 import (
 	"sync"
 
-	"github.com/diamondburned/arikawa/v3/discord"
-	"github.com/diamondburned/arikawa/v3/state/store"
+	"github.com/ayn2op/arikawa/v3/discord"
+	"github.com/ayn2op/arikawa/v3/state/store"
 )
 
 // PresenceStore is a presence store that allows searching for a user presence
