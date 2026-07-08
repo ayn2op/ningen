@@ -17,8 +17,8 @@ cloud.google.com/go/storage v1.5.0/go.mod h1:tpKbwo567HUNpVclU5sGELwQWBDZ8gh0Zeo
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
-github.com/ayn2op/arikawa/v3 v3.0.0-20260619211231-9a7da0c518de h1:j5qhTMT9t09g7R/8ndYTSSTpsTDQRbiHj/+iE5nx3Wc=
-github.com/ayn2op/arikawa/v3 v3.0.0-20260619211231-9a7da0c518de/go.mod h1:96vOKCn1rSdu7xJrCrKdwYzlgDZ5NmV9cMtPAeGHlGM=
+github.com/ayn2op/arikawa/v3 v3.0.0-20260708075022-9cc760fe507e h1:rsMifRXwxkbhauFOeuIixkrP3MIvnuj+i1e8/UhS554=
+github.com/ayn2op/arikawa/v3 v3.0.0-20260708075022-9cc760fe507e/go.mod h1:gqklpHK7WHYTzpd1ZY6Ho/p9GURBghzBCzRiBYpaUP8=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWRnGsAI=
 github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5PlCu98SY8svDHJxuZscDgtXS6KTTbou5AhLI=
