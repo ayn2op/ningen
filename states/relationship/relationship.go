@@ -1,7 +1,7 @@
 package relationship
 
 import (
-	"sort"
+	"slices"
 	"sync"
 
 	"github.com/ayn2op/arikawa/v3/discord"
@@ -115,9 +115,7 @@ func (r *State) BlockedUserIDs() []discord.UserID {
 		userIDs = append(userIDs, uID)
 	}
 
-	sort.Slice(userIDs, func(i, j int) bool {
-		return userIDs[i] < userIDs[j]
-	})
+	slices.Sort(userIDs)
 
 	return userIDs
 }

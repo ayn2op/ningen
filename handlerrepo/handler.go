@@ -7,8 +7,8 @@ import (
 
 // AddHandler is an interface for separate states to bind their handlers.
 type AddHandler interface {
-	AddHandler(fn interface{}) (cancel func())
-	AddSyncHandler(fn interface{}) (cancel func())
+	AddHandler(fn any) (cancel func())
+	AddSyncHandler(fn any) (cancel func())
 }
 
 var _ AddHandler = (*handler.Handler)(nil)
@@ -29,13 +29,13 @@ func NewRepository(adder AddHandler) *Repository {
 	}
 }
 
-func (r *Repository) AddHandler(fn interface{}) (cancel func()) {
+func (r *Repository) AddHandler(fn any) (cancel func()) {
 	cancel = r.adder.AddHandler(fn)
 	r.cancel = append(r.cancel, cancel)
 	return
 }
 
-func (r *Repository) AddSyncHandler(fn interface{}) (cancel func()) {
+func (r *Repository) AddSyncHandler(fn any) (cancel func()) {
 	cancel = r.adder.AddSyncHandler(fn)
 	r.cancel = append(r.cancel, cancel)
 	return
@@ -61,7 +61,7 @@ func NewReadyInjector(adder AddHandler, r *gateway.ReadyEvent) *ReadyInjector {
 	}
 }
 
-func (r *ReadyInjector) AddHandler(fn interface{}) (cancel func()) {
+func (r *ReadyInjector) AddHandler(fn any) (cancel func()) {
 	if readyfn, ok := fn.(func(*gateway.ReadyEvent)); ok {
 		readyfn(r.ready)
 	}

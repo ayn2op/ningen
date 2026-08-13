@@ -367,7 +367,7 @@ func chunkEq(chk1, chk2 [][2]int) bool {
 		return false
 	}
 
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		for j := range chk1 {
 			if chk1[j][i] != chk2[j][i] {
 				return false
@@ -436,10 +436,7 @@ func (m *State) RequestMemberList(
 
 	// Derive the minimum chunk, if any. Skip the first chunk (0th), because
 	// we're adding that ourselves.
-	start = chunk - MaxMemberChunk
-	if start < 1 {
-		start = 1
-	}
+	start = max(chunk-MaxMemberChunk, 1)
 
 	// Always keep the first chunk alive.
 	chunks := make([][2]int, 1, chunk-start+1)

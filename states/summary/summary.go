@@ -192,9 +192,7 @@ func NewState(state *state.State, r handlerrepo.AddHandler) *State {
 	})
 
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 
 		persistentPathInit()
 		if persistentPath == "" {
@@ -257,7 +255,7 @@ func NewState(state *state.State, r handlerrepo.AddHandler) *State {
 			s.summaries[chID] = insertSummaries(s.summaries[chID], summaries...)
 			s.mutex.Unlock()
 		}
-	}()
+	})
 
 	r.AddSyncHandler(func(*ws.CloseEvent) {
 		wg.Wait()

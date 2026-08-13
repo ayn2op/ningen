@@ -1,6 +1,8 @@
 package discordmd
 
 import (
+	"slices"
+
 	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/text"
@@ -34,11 +36,9 @@ type inlineDelimiterProcessor struct {
 }
 
 func (p *inlineDelimiterProcessor) IsDelimiter(b byte) bool {
-	for _, t := range inlineTriggers {
-		if t == b {
-			p.char = b
-			return true
-		}
+	if slices.Contains(inlineTriggers, b) {
+		p.char = b
+		return true
 	}
 
 	return false

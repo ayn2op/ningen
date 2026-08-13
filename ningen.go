@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"slices"
 	"sort"
 	"time"
 
@@ -60,13 +61,7 @@ func (ev *DisconnectedEvent) IsLoggedOut() bool {
 		return false
 	}
 
-	for _, code := range gateway.DefaultGatewayOpts.FatalCloseCodes {
-		if code == ev.Code {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(gateway.DefaultGatewayOpts.FatalCloseCodes, ev.Code)
 }
 
 // IsGraceful returns true if the disconnection is done by the websocket and not
@@ -764,7 +759,7 @@ func (r *State) SetStatus(status discord.Status, custom *gateway.CustomUserStatu
 	}
 
 	// Keep this the same as gateway.UserSettings.
-	patchSettings := map[string]interface{}{"status": status}
+	patchSettings := map[string]any{"status": status}
 	if custom != nil {
 		patchSettings["custom_status"] = custom
 	}

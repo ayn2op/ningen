@@ -1,6 +1,7 @@
 package thread
 
 import (
+	"slices"
 	"sync"
 
 	"github.com/ayn2op/arikawa/v3/discord"
@@ -62,14 +63,12 @@ func NewState(state *state.State, h handlerrepo.AddHandler) *State {
 			}
 		}
 
-		for _, memberID := range ev.RemovedMemberIDs {
-			if memberID == userID {
-				// We left a thread.
-				s.joinedMu.Lock()
-				delete(s.joined, ev.ID)
-				s.joinedMu.Unlock()
-				return
-			}
+		if slices.Contains(ev.RemovedMemberIDs, userID) {
+			// We left a thread.
+			s.joinedMu.Lock()
+			delete(s.joined, ev.ID)
+			s.joinedMu.Unlock()
+			return
 		}
 	})
 

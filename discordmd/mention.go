@@ -2,6 +2,7 @@ package discordmd
 
 import (
 	"regexp"
+	"slices"
 
 	"github.com/ayn2op/arikawa/v3/discord"
 	"github.com/ayn2op/arikawa/v3/state/store"
@@ -123,11 +124,8 @@ func (mention) Parse(parent ast.Node, block text.Reader, pc parser.Context) ast.
 	case "@&": // role
 		d := discord.RoleID(d)
 		// Check if the role is actually mentioned.
-		for _, id := range msg.MentionRoleIDs {
-			if id == d {
-				mentioned = true
-				break
-			}
+		if slices.Contains(msg.MentionRoleIDs, d) {
+			mentioned = true
 		}
 
 		r, err := cab.Role(msg.GuildID, d)
