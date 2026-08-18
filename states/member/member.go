@@ -572,7 +572,7 @@ func (m *State) onListUpdate(ev *gateway.GuildMemberListUpdateEvent) {
 			op.Item = ml.items[i]
 			ev.Ops[i] = op
 			// Actually delete the item.
-			ml.items = append(ml.items[:oi], ml.items[oi+1:]...)
+			ml.items = slices.Delete(ml.items, oi, oi+1)
 		}
 	}
 
