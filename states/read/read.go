@@ -2,7 +2,6 @@
 package read
 
 import (
-	"encoding/json"
 	"log/slog"
 	"sync"
 
@@ -40,16 +39,6 @@ func NewState(state *state.State, r handlerrepo.AddHandler) *State {
 	}
 
 	r.AddSyncHandler(func(r *gateway.ReadyEvent) {
-		// Discord sucks massive fucking balls.
-		// They sometimes do this. Probably because of the .capabilities field.
-		// Not sure why.
-		var undocumentedWeirdness struct {
-			ReadStates struct {
-				Entries []gateway.ReadState `json:"entries"`
-			} `json:"read_state"`
-		}
-		json.Unmarshal(r.RawEventBody, &undocumentedWeirdness)
-
 		readstate.mutex.Lock()
 		defer readstate.mutex.Unlock()
 
@@ -57,9 +46,6 @@ func NewState(state *state.State, r handlerrepo.AddHandler) *State {
 
 		for i, rs := range r.ReadStates {
 			readstate.states[rs.ChannelID] = &r.ReadStates[i]
-		}
-		for i, rs := range undocumentedWeirdness.ReadStates.Entries {
-			readstate.states[rs.ChannelID] = &undocumentedWeirdness.ReadStates.Entries[i]
 		}
 	})
 
