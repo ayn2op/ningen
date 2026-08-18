@@ -35,6 +35,7 @@ func NewState(state *state.State, h handlerrepo.AddHandler) *State {
 
 		s.joinedMu.Lock()
 		defer s.joinedMu.Unlock()
+		clear(s.joined)
 
 		for _, guild := range ev.Guilds {
 			for _, thread := range guild.Threads {
