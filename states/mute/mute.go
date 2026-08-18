@@ -22,14 +22,18 @@ type State struct {
 }
 
 func NewState(cab *store.Cabinet, r handlerrepo.AddHandler) *State {
-	mute := &State{cab: cab}
+	mute := &State{
+		cab:      cab,
+		guilds:   make(map[discord.GuildID]gateway.UserGuildSetting),
+		channels: make(map[discord.ChannelID]gateway.UserChannelOverride),
+	}
 
 	r.AddSyncHandler(func(r *gateway.ReadyEvent) {
 		mute.mutex.Lock()
 		defer mute.mutex.Unlock()
 
-		mute.guilds = make(map[discord.GuildID]gateway.UserGuildSetting, len(r.UserGuildSettings))
-		mute.channels = map[discord.ChannelID]gateway.UserChannelOverride{}
+		clear(mute.guilds)
+		clear(mute.channels)
 
 		for i, guild := range r.UserGuildSettings {
 			mute.guilds[guild.GuildID] = r.UserGuildSettings[i]
