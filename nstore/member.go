@@ -33,7 +33,7 @@ func NewMemberStore() *MemberStore {
 
 func (s *MemberStore) Reset() error {
 	s.mut.Lock()
-	s.guilds = map[discord.GuildID]*guildMembers{}
+	clear(s.guilds)
 	s.mut.Unlock()
 
 	return nil

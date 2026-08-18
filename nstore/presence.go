@@ -25,7 +25,7 @@ func (pres *PresenceStore) Reset() error {
 	pres.mut.Lock()
 	defer pres.mut.Unlock()
 
-	pres.presences = make(map[discord.UserID][]discord.Presence, 100)
+	clear(pres.presences)
 
 	return nil
 }
