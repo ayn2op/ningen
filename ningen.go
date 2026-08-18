@@ -3,11 +3,11 @@
 package ningen
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"log/slog"
 	"slices"
-	"sort"
 	"time"
 
 	"github.com/ayn2op/arikawa/v3/api"
@@ -345,8 +345,8 @@ func (s *State) PrivateChannels() ([]discord.Channel, error) {
 		return nil, err
 	}
 
-	sort.SliceStable(c, func(i, j int) bool {
-		return c[i].LastMessageID > c[j].LastMessageID
+	slices.SortStableFunc(c, func(a, b discord.Channel) int {
+		return cmp.Compare(b.LastMessageID, a.LastMessageID)
 	})
 
 	return c, nil
