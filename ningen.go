@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"slices"
 	"sort"
 	"time"
 
@@ -16,8 +15,6 @@ import (
 	"github.com/ayn2op/arikawa/v3/state"
 	"github.com/ayn2op/arikawa/v3/utils/handler"
 	"github.com/ayn2op/arikawa/v3/utils/httputil"
-	"github.com/ayn2op/arikawa/v3/utils/json"
-	"github.com/ayn2op/arikawa/v3/utils/ws"
 	"github.com/ayn2op/ningen/v3/nstore"
 	"github.com/ayn2op/ningen/v3/states/emoji"
 	"github.com/ayn2op/ningen/v3/states/guild"
@@ -39,37 +36,6 @@ func init() {
 	cancelledCtx = c
 }
 
-func init() {
-	gateway.ReadyEventKeepRaw = true
-}
-
-// ConnectedEvent is an event that's sent on Ready or Resumed. The event arrives
-// before all ningen's handlers are called.
-type ConnectedEvent struct {
-	gateway.Event
-}
-
-// DisconnectedEvent is an event that's sent when the websocket is disconnected.
-type DisconnectedEvent struct {
-	ws.CloseEvent
-}
-
-// IsLoggedOut returns true if the session that Discord gave is now outdated and
-// that the user must login again.
-func (ev *DisconnectedEvent) IsLoggedOut() bool {
-	if ev.Code == -1 {
-		return false
-	}
-
-	return slices.Contains(gateway.DefaultGatewayOpts.FatalCloseCodes, ev.Code)
-}
-
-// IsGraceful returns true if the disconnection is done by the websocket and not
-// by a connection drop.
-func (ev *DisconnectedEvent) IsGraceful() bool {
-	return ev.Code != -1
-}
-
 type State struct {
 	*state.State
 	*handler.Handler
@@ -89,7 +55,6 @@ type State struct {
 	SummaryState      *summary.State
 	RelationshipState *relationship.State
 
-	initd  chan struct{} // nil after Open().
 	oldCtx context.Context
 }
 
@@ -109,7 +74,6 @@ func NewWithIdentifier(id gateway.Identifier) *State {
 // FromState wraps a normal state.
 func FromState(s *state.State) *State {
 	state := &State{
-		initd:   make(chan struct{}, 1),
 		State:   s,
 		Handler: handler.New(),
 	}
@@ -179,25 +143,6 @@ func FromState(s *state.State) *State {
 				s.PresenceSet(p.GuildID, &new, true)
 			}
 
-		case *gateway.ReadyEvent:
-			// Send to channel that unblocks Open() so applications don't access
-			// nil states and avoid data race.
-			select {
-			case state.initd <- struct{}{}:
-				// Since this channel is one-buffered, we can do this.
-			default:
-			}
-
-			state.hackReady(v)
-		}
-
-		switch v := v.(type) {
-		// Might be better to trigger this on a ReadySupplemental event, as
-		// that's when things are truly done?
-		case *gateway.ReadyEvent, *gateway.ResumedEvent:
-			state.Handler.Call(&ConnectedEvent{v})
-		case *ws.CloseEvent:
-			state.Handler.Call(&DisconnectedEvent{*v})
 		}
 
 		// Call the external handler after we're done. This handler is
@@ -206,74 +151,6 @@ func FromState(s *state.State) *State {
 	})
 
 	return state
-}
-
-func (s *State) hackReady(ev *gateway.ReadyEvent) {
-	var extras readyEventExtras
-
-	if errs := json.PartialUnmarshal(ev.RawEventBody, &extras); len(errs) > 0 {
-		for _, err := range errs {
-			s.Handler.Call(&ws.BackgroundErrorEvent{
-				Err: errors.Wrap(err, "error with ningen.readyEventExtras"),
-			})
-		}
-		return
-	}
-
-	for _, user := range extras.Users {
-		// Hopefully the state is happy with us doing this. We really don't have
-		// a user store because it's such a backwards way of doing things, but
-		// we also don't know if existing code even uses this.
-		presence := &discord.Presence{
-			User:    user,
-			GuildID: 0,
-			Status:  discord.OfflineStatus,
-		}
-		s.Cabinet.PresenceSet(0, presence, true)
-	}
-
-	// This is also weird.
-	for _, ch := range extras.PrivateChannelsV2 {
-		if len(ch.RecipientIDs) == 0 || len(ch.DMRecipients) > 0 {
-			continue
-		}
-
-		ch.DMRecipients = make([]discord.User, len(ch.RecipientIDs))
-		for i, id := range ch.RecipientIDs {
-			u := discord.User{
-				ID: id,
-			}
-
-			presence, _ := s.Cabinet.Presence(0, id)
-			if presence != nil {
-				u = presence.User
-			}
-
-			ch.DMRecipients[i] = u
-		}
-
-		s.Cabinet.ChannelSet(&ch.Channel, true)
-	}
-}
-
-func (s *State) Open(ctx context.Context) error {
-	// Ensure the channel is free.
-	select {
-	case <-s.initd:
-	default:
-	}
-
-	if err := s.State.Open(ctx); err != nil {
-		return err
-	}
-
-	// Wait until ReadySupplementalEvent.
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case <-s.initd:
-		return nil
-	}
 }
 
 // WithContext returns State with the given context.
