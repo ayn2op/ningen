@@ -43,6 +43,7 @@ func NewState(state *state.State, r handlerrepo.AddHandler) *State {
 		defer readstate.mutex.Unlock()
 
 		readstate.selfID = r.User.ID
+		clear(readstate.states)
 
 		for i, rs := range r.ReadStates {
 			readstate.states[rs.ChannelID] = &r.ReadStates[i]
