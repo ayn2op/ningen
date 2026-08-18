@@ -93,8 +93,8 @@ func NewState(state *state.State, h handlerrepo.AddHandler) *State {
 		s.minFetchMu.Lock()
 
 		// Invalidate everything.
-		s.guilds = map[discord.GuildID]*Guild{}
-		s.minFetched = map[discord.ChannelID]int{}
+		clear(s.guilds)
+		clear(s.minFetched)
 
 		s.minFetchMu.Unlock()
 		s.guildMu.Unlock()
