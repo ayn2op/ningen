@@ -1,7 +1,7 @@
 package emoji
 
 import (
-	"sort"
+	"slices"
 
 	"github.com/ayn2op/arikawa/v3/discord"
 	"github.com/ayn2op/arikawa/v3/state/store"
@@ -106,7 +106,14 @@ func (s *State) AllEmojis() ([]Guild, error) {
 
 // PutGuildFirst puts the guild with the given ID first in the guilds list.
 func PutGuildFirst(guilds []Guild, first discord.GuildID) {
-	sort.SliceStable(guilds, func(i, j int) bool {
-		return guilds[i].ID == first
+	slices.SortStableFunc(guilds, func(a, b Guild) int {
+		switch {
+		case a.ID == first && b.ID != first:
+			return -1
+		case a.ID != first && b.ID == first:
+			return 1
+		default:
+			return 0
+		}
 	})
 }
