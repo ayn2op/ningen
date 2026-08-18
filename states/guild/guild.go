@@ -16,13 +16,13 @@ type State struct {
 }
 
 func NewState(h handlerrepo.AddHandler) *State {
-	s := &State{}
+	s := &State{joins: make(map[discord.GuildID]time.Time)}
 
 	h.AddSyncHandler(func(r *gateway.ReadyEvent) {
 		s.mutex.Lock()
 		defer s.mutex.Unlock()
 
-		s.joins = make(map[discord.GuildID]time.Time, len(r.Guilds))
+		clear(s.joins)
 		for _, guild := range r.Guilds {
 			s.joins[guild.ID] = guild.Joined.Time()
 		}
