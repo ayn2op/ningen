@@ -20,11 +20,13 @@ import (
 	"github.com/ayn2op/ningen/v3/handlerrepo"
 )
 
-var maxSummaries int64 = 10
+var maxSummaries atomic.Int64
+
+func init() { maxSummaries.Store(10) }
 
 // SetMaxSummaries sets the maximum number of summaries to keep in memory.
 func SetMaxSummaries(max int) {
-	atomic.StoreInt64(&maxSummaries, int64(max))
+	maxSummaries.Store(int64(max))
 }
 
 // PersistenceMaxAge is the maximum age of a persisted summary. Summaries older
@@ -275,8 +277,9 @@ func insertSummaries(summaries []gateway.ConversationSummary, more ...gateway.Co
 			summaries = slices.Insert(summaries, ix, summary)
 		}
 	}
-	if len(summaries) > int(maxSummaries) {
-		summaries = slices.Delete(summaries, 0, len(summaries)-int(maxSummaries))
+	max := int(maxSummaries.Load())
+	if len(summaries) > max {
+		summaries = slices.Delete(summaries, 0, len(summaries)-max)
 	}
 	return summaries
 }
