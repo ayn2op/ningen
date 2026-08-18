@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -528,7 +529,7 @@ func (m *State) onListUpdate(ev *gateway.GuildMemberListUpdateEvent) {
 			start, end := op.Range[0], op.Range[1]
 			// Copy the old items into the Items field for future uses in other
 			// handlers.
-			op.Items = append([]gateway.GuildMemberListOpItem{}, ml.items[start:end]...)
+			op.Items = slices.Clone(ml.items[start:end])
 			ev.Ops[i] = op
 
 			// Nullify the to-be-invalidated chunks.
