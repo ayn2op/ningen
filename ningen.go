@@ -130,7 +130,7 @@ func FromState(s *state.State) *State {
 						}
 					}
 
-					new.Activities = append([]discord.Activity{}, new.Activities...)
+					new.Activities = slices.Clone(new.Activities)
 					for i, activity := range new.Activities {
 						if activity.Type == discord.CustomActivity {
 							new.Activities[i] = customActivity
@@ -617,7 +617,7 @@ func (r *State) SetStatus(status discord.Status, custom *gateway.CustomUserStatu
 			}
 		}
 
-		activities = append([]discord.Activity{}, activities...)
+		activities = slices.Clone(activities)
 		activities = append(activities, customActivity)
 	}
 
