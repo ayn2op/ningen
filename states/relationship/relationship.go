@@ -24,7 +24,7 @@ func NewState(store store.PresenceStore, r handlerrepo.AddHandler) *State {
 		state.mutex.Lock()
 		defer state.mutex.Unlock()
 
-		state.relationships = make(map[discord.UserID]discord.Relationship, len(r.Relationships))
+		clear(state.relationships)
 
 		for _, rl := range r.Relationships {
 			state.relationships[rl.UserID] = rl
