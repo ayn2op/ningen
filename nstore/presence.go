@@ -1,6 +1,7 @@
 package nstore
 
 import (
+	"slices"
 	"sync"
 
 	"github.com/ayn2op/arikawa/v3/discord"
@@ -115,7 +116,7 @@ func (pres *PresenceStore) PresenceSet(guild discord.GuildID, p *discord.Presenc
 		if presence.GuildID == guild {
 			// Delete this entry and break out of the loop. Add this one to the
 			// end of the list always.
-			presences = append(presences[:i], presences[i+1:]...)
+			presences = slices.Delete(presences, i, i+1)
 			break
 		}
 	}
@@ -142,7 +143,7 @@ func (pres *PresenceStore) PresenceRemove(guild discord.GuildID, user discord.Us
 				return nil
 			}
 
-			presences = append(presences[:i], presences[i+1:]...)
+			presences = slices.Delete(presences, i, i+1)
 			pres.presences[user] = presences
 			return nil
 		}
