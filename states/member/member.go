@@ -213,9 +213,9 @@ func (m *State) SearchMember(guildID discord.GuildID, query string) {
 	gd.lastSearch = time.Now()
 
 	go func() {
-		var queryVar option.String
+		var queryVar option.Option[string]
 		if query != "" {
-			queryVar = option.NewString(query)
+			queryVar = option.Some(query)
 		}
 
 		search := &gateway.RequestGuildMembersCommand{
@@ -319,26 +319,6 @@ func (m *State) onMembers(c *gateway.GuildMembersChunkEvent) {
 		delete(guild.requested, member.User.ID)
 	}
 }
-
-// // InvalidateMemberList invalides the member list for the given channel ID.
-// func (m *State) InvalidateMemberList(guildID discord.GuildID, channelID discord.ChannelID) {
-// 	m.maxFetchMu.Lock()
-// 	delete(m.maxFetched, channelID)
-// 	m.maxFetchMu.Unlock()
-
-// 	go func() {
-// 		err := m.state.Gateway.GuildSubscribe(gateway.GuildSubscribeData{
-// 			GuildID: guildID,
-// 			Channels: map[discord.ChannelID][][2]int{
-// 				channelID: {{0, 0}},
-// 			},
-// 		})
-
-// 		if err != nil {
-// 			m.OnError(errors.Wrap(err, "Failed to subscribe to member list"))
-// 		}
-// 	}()
-// }
 
 // MaxMemberChunk indicates the number of chunks the member list might have
 // active at once. The 3 means that there can be 300 simultaneous active users.
@@ -570,7 +550,7 @@ func (m *State) onListUpdate(ev *gateway.GuildMemberListUpdateEvent) {
 
 		if length == 0 || length <= oi {
 			m.OnError(fmt.Errorf(
-				"Member %s: index out of range: len(ml.Items)=%d <= op.Index=%d\n",
+				"member %s: index out of range: len(ml.Items)=%d <= op.Index=%d",
 				op.Op, len(ml.items), oi,
 			))
 			continue
@@ -611,12 +591,12 @@ func (m *State) onListUpdateState(ev *gateway.GuildMemberListUpdateEvent) {
 	for _, op := range ev.Ops {
 		switch op.Op {
 		case "SYNC", "INSERT", "UPDATE":
-			items := append(op.Items, op.Item)
-			for i, item := range items {
+			op.Items = append(op.Items, op.Item)
+			for i, item := range op.Items {
 				if item.Member != nil {
 					update := op.Op == "UPDATE"
-					m.state.MemberSet(ev.GuildID, &items[i].Member.Member, update)
-					m.state.PresenceSet(ev.GuildID, &items[i].Member.Presence, update)
+					m.state.MemberSet(ev.GuildID, &op.Items[i].Member.Member, update)
+					m.state.PresenceSet(ev.GuildID, &op.Items[i].Member.Presence, update)
 				}
 			}
 		}
@@ -629,7 +609,7 @@ func growItems(items *[]gateway.GuildMemberListOpItem, maxLen int) {
 		return
 	}
 	delta := maxLen - len(cpy)
-	*items = append(cpy, make([]gateway.GuildMemberListOpItem, delta)...)
+	*items = append(*items, make([]gateway.GuildMemberListOpItem, delta)...)
 }
 
 func ComputeListID(overrides []discord.Overwrite) string {

@@ -17,8 +17,8 @@ type mockNingen struct {
 	MemberState *State
 }
 
-func ningenFromState(s *state.State) (*mockNingen, error) {
-	return &mockNingen{s, NewState(s, s)}, nil
+func ningenFromState(s *state.State) *mockNingen {
+	return &mockNingen{s, NewState(s, s)}
 }
 
 const (
@@ -30,10 +30,7 @@ func ExampleState_RequestMemberList() {
 	s := state.New(os.Getenv("TOKEN"))
 
 	// Replace with the actual ningen.FromState function.
-	n, err := ningenFromState(s)
-	if err != nil {
-		log.Fatalln("Failed to create a ningen state:", err)
-	}
+	n := ningenFromState(s)
 
 	updates := make(chan *gateway.GuildMemberListUpdateEvent, 1)
 	n.AddHandler(updates)

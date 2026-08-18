@@ -65,11 +65,6 @@ func TestFenced(t *testing.T) {
 		parser.WithBlockParsers(BlockParsers()...),
 	)
 
-	// // Make a default new markdown renderer:
-	// md := goldmark.New(
-	// 	goldmark.WithParser(p),
-	// )
-	//
 	var tests = []struct {
 		md, html, name string
 	}{
@@ -84,12 +79,6 @@ func TestFenced(t *testing.T) {
 			node := p.Parse(text.NewReader([]byte(test.md)))
 			dump := dump(node, []byte(test.md))
 			t.Log("node:\n", dump)
-
-			// var buf bytes.Buffer
-			// if err := md.Convert([]byte(test.md), &buf); err != nil {
-			// 	t.Fatal("Failed to parse fenced "+test.name+":", err)
-			// }
-			// strcmp(t, "fenced "+test.name, buf.String(), test.html)
 		})
 	}
 }

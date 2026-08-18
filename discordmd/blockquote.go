@@ -21,12 +21,6 @@ func (b blockquote) process(reader text.Reader) bool {
 
 	pos++
 
-	// What the fuck is this?
-	// if pos >= len(line) || line[pos] == '\n' {
-	// 	reader.Advance(pos)
-	// 	return true
-	// }
-
 	// Invalid behavior: >Thing
 	if pos < len(line) && !util.IsSpace(line[pos]) {
 		return false

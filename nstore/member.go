@@ -88,7 +88,6 @@ func (s *MemberStore) MemberSet(guildID discord.GuildID, member *discord.Member,
 	}
 	s.mut.Unlock()
 
-	// TODO: update
 	gm.mut.Lock()
 	gm.members[member.User.ID] = *member
 	gm.mut.Unlock()

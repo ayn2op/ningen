@@ -41,11 +41,14 @@ func parseListItem(line []byte) ([6]int, listItemType) {
 	ret[1] = i
 	ret[2] = i
 	var typ listItemType
-	if i < l && (line[i] == '-' || line[i] == '*') {
+	switch {
+	case i >= l:
+		return ret, notList
+	case line[i] == '-' || line[i] == '*':
 		i++
 		ret[3] = i
 		typ = bulletList
-	} else if i < l {
+	default:
 		for ; i < l && util.IsNumeric(line[i]); i++ {
 		}
 		ret[3] = i
@@ -59,8 +62,6 @@ func parseListItem(line []byte) ([6]int, listItemType) {
 			return ret, notList
 		}
 		typ = orderedList
-	} else {
-		return ret, notList
 	}
 	if i < l && line[i] != '\n' {
 		w, _ := util.IndentWidth(line[i:], 0)
@@ -143,7 +144,7 @@ func (b *listParser) Open(parent ast.Node, reader text.Reader, pc parser.Context
 		if typ == orderedList && start != 1 {
 			return nil, parser.NoChildren
 		}
-		//an empty list item cannot interrupt a paragraph:
+		// An empty list item cannot interrupt a paragraph:
 		if match[4] < 0 || util.IsBlank(line[match[4]:match[5]]) {
 			return nil, parser.NoChildren
 		}

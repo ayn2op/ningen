@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"slices"
 	"sort"
 	"time"
 
@@ -322,9 +323,7 @@ func joinSession(me discord.User, r *gateway.SessionsReplaceEvent) *discord.Pres
 	var status discord.Status
 	var activities []discord.Activity
 
-	for i := len(ses) - 1; i >= 0; i-- {
-		presence := ses[i]
-
+	for _, presence := range slices.Backward(ses) {
 		if presence.Status != "" {
 			status = presence.Status
 		}

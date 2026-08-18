@@ -9,8 +9,7 @@ import (
 )
 
 type State struct {
-	cab        *store.Cabinet
-	emojiStore store.EmojiStore
+	cab *store.Cabinet
 }
 
 type Guild struct {
@@ -63,7 +62,7 @@ func (s *State) ForGuild(guildID discord.GuildID) ([]Guild, error) {
 	filtered := emojis[:0]
 
 	for _, e := range emojis {
-		if e.Animated == false {
+		if !e.Animated {
 			filtered = append(filtered, e)
 		}
 	}

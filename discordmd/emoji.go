@@ -47,7 +47,7 @@ func (e *Emoji) Dump(source []byte, level int) {
 }
 
 func (e Emoji) EmojiURL() string {
-	return EmojiURL(string(e.ID), e.GIF)
+	return EmojiURL(e.ID, e.GIF)
 }
 
 type emoji struct {

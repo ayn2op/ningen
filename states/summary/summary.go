@@ -160,9 +160,7 @@ func NewState(state *state.State, r handlerrepo.AddHandler) *State {
 
 		// Traverse from the end to the beginning so that we can delete the
 		// oldest summaries first.
-		for i := len(files) - 1; i >= 0; i-- {
-			file := files[i]
-
+		for _, file := range slices.Backward(files) {
 			if kept < PersistenceMaxCount {
 				if fileIDs[file].Time().Add(PersistenceMaxAge).After(now) {
 					kept++

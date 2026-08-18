@@ -13,8 +13,6 @@ import (
 
 var unescaper = bytereplacer.New("\\\\", "\\", "\\", "")
 
-// var doubleBackslash = []byte{'\\', '\\'}
-
 // Unescape handles escape characters. This is a helper function for renderers.
 func Unescape(src []byte) []byte {
 	return unescaper.Replace(src)
@@ -89,7 +87,8 @@ func (r *basicRenderWalker) walk(w io.Writer, source []byte, n ast.Node, enter b
 			// Write the body
 			for i := 0; i < n.Lines().Len(); i++ {
 				line := n.Lines().At(i)
-				io.WriteString(w, "| "+string(line.Value(source)))
+				io.WriteString(w, "| ")
+				w.Write(line.Value(source))
 			}
 		}
 	case *ast.Link:
@@ -98,7 +97,7 @@ func (r *basicRenderWalker) walk(w io.Writer, source []byte, n ast.Node, enter b
 		}
 	case *ast.AutoLink:
 		if enter {
-			io.WriteString(w, string(n.URL(source)))
+			w.Write(n.URL(source))
 		}
 	case *Inline:
 		// n.Attr should be used, but since we're in plaintext mode, there
@@ -114,7 +113,7 @@ func (r *basicRenderWalker) walk(w io.Writer, source []byte, n ast.Node, enter b
 		}
 	case *Emoji:
 		if enter {
-			io.WriteString(w, ":"+string(n.Name)+":")
+			io.WriteString(w, ":"+n.Name+":")
 		}
 	case *Mention:
 		if enter {

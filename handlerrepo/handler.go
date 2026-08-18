@@ -1,7 +1,6 @@
 package handlerrepo
 
 import (
-	"github.com/ayn2op/arikawa/v3/gateway"
 	"github.com/ayn2op/arikawa/v3/utils/handler"
 )
 
@@ -45,27 +44,4 @@ func (r *Repository) Unbind() {
 	for _, fn := range r.cancel {
 		fn()
 	}
-}
-
-// ReadyInjector is an event handler wrapper that allows injecting the Ready
-// event.
-type ReadyInjector struct {
-	adder AddHandler
-	ready *gateway.ReadyEvent
-}
-
-func NewReadyInjector(adder AddHandler, r *gateway.ReadyEvent) *ReadyInjector {
-	return &ReadyInjector{
-		adder: adder,
-		ready: r,
-	}
-}
-
-func (r *ReadyInjector) AddHandler(fn any) (cancel func()) {
-	if readyfn, ok := fn.(func(*gateway.ReadyEvent)); ok {
-		readyfn(r.ready)
-	}
-
-	cancel = r.adder.AddHandler(fn)
-	return
 }

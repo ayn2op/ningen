@@ -16,18 +16,18 @@ type State struct {
 }
 
 func NewState(store store.PresenceStore, r handlerrepo.AddHandler) *State {
-	rela := &State{
+	state := &State{
 		relationships: map[discord.UserID]discord.Relationship{},
 	}
 
 	r.AddSyncHandler(func(r *gateway.ReadyEvent) {
-		rela.mutex.Lock()
-		defer rela.mutex.Unlock()
+		state.mutex.Lock()
+		defer state.mutex.Unlock()
 
-		rela.relationships = make(map[discord.UserID]discord.Relationship, len(r.Relationships))
+		state.relationships = make(map[discord.UserID]discord.Relationship, len(r.Relationships))
 
 		for _, rl := range r.Relationships {
-			rela.relationships[rl.UserID] = rl
+			state.relationships[rl.UserID] = rl
 
 			if rl.User.ID == rl.UserID {
 				// Update our local presence state.
@@ -43,28 +43,28 @@ func NewState(store store.PresenceStore, r handlerrepo.AddHandler) *State {
 	})
 
 	r.AddSyncHandler(func(add *gateway.RelationshipAddEvent) {
-		rela.mutex.Lock()
-		defer rela.mutex.Unlock()
+		state.mutex.Lock()
+		defer state.mutex.Unlock()
 
-		rela.relationships[add.UserID] = add.Relationship
+		state.relationships[add.UserID] = add.Relationship
 	})
 
 	r.AddSyncHandler(func(rem *gateway.RelationshipRemoveEvent) {
-		rela.mutex.Lock()
-		defer rela.mutex.Unlock()
+		state.mutex.Lock()
+		defer state.mutex.Unlock()
 
-		delete(rela.relationships, rem.UserID)
+		delete(state.relationships, rem.UserID)
 	})
 
-	return rela
+	return state
 }
 
 func (r *State) Each(fn func(discord.UserID, discord.RelationshipType) (stop bool)) {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 
-	for userID, rela := range r.relationships {
-		if fn(userID, rela.Type) {
+	for userID, relationship := range r.relationships {
+		if fn(userID, relationship.Type) {
 			return
 		}
 	}
