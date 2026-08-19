@@ -513,18 +513,15 @@ func (r *State) ChannelIsUnread(chID discord.ChannelID, opts UnreadOpts) UnreadI
 	if !lastMsgID.IsValid() {
 		return ChannelRead
 	}
+	if state.LastMessageID >= lastMsgID {
+		return ChannelRead
+	}
 
-	// This permission check isn't very important. We can do it just right
-	// before the unread check.
 	if !r.HasPermissions(chID, discord.PermissionViewChannel) {
 		return ChannelRead
 	}
 
-	if state.LastMessageID < lastMsgID {
-		return ChannelUnread
-	}
-
-	return ChannelRead
+	return ChannelUnread
 }
 
 // GuildUnreadOpts are options for the GuildIsUnread function.

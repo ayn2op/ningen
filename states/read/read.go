@@ -197,22 +197,10 @@ func (r *State) markRead(chID discord.ChannelID, msgID discord.MessageID, sendac
 	rs.LastMessageID = msgID
 	rs.MentionCount = 0
 
-	// Send out Ack in the background, but only if we explicitly want to, that
-	// is, if MarkRead is called and sendAck is true. In the event that the
-	// gateway receives an Ack, we don't want to send another one of the same.
-	if sendack {
-		m, err := r.state.Cabinet.Message(chID, msgID)
-		if err != nil {
-			// log.Println("ningen: trying to ack unknown message", msgID, "in channel", chID)
-			return
-		}
-
-		// If there is an error or there is none and we know this message isn't
-		// ours, then ack.
-		if m.Author.ID != r.selfID {
-			// log.Println("ningen: actually acking", chID, "for message", msgID, "was", prevMessageID)
-			go r.ack(chID, msgID)
-		}
+	// The channel cursor is a valid ack target even if the referenced message
+	// is not in the message cache.
+	if sendack && msgID.IsValid() {
+		go r.ack(chID, msgID)
 	}
 
 	// copy
