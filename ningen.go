@@ -459,14 +459,16 @@ func (s *State) AssertPermissions(chID discord.ChannelID, perms discord.Permissi
 
 // LastMessage returns the last message ID in the given channel.
 func (r *State) LastMessage(chID discord.ChannelID) discord.MessageID {
+	ch, _ := r.Cabinet.Channel(chID)
+	// Discord uses this cursor for unread comparisons even when it no longer
+	// points to an existing message.
+	if ch != nil && ch.LastMessageID.IsValid() {
+		return ch.LastMessageID
+	}
+
 	msgs, _ := r.Cabinet.Messages(chID)
 	if len(msgs) > 0 {
 		return msgs[0].ID
-	}
-
-	ch, _ := r.Cabinet.Channel(chID)
-	if ch != nil {
-		return ch.LastMessageID
 	}
 
 	return 0

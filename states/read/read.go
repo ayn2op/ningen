@@ -79,6 +79,19 @@ func NewState(state *state.State, r handlerrepo.AddHandler) *State {
 		readstate.MarkUnread(c.ChannelID, c.ID, mentions)
 	})
 
+	r.AddSyncHandler(func(u *gateway.ChannelUnreadUpdateEvent) {
+		for _, update := range u.ChannelUnreadUpdates {
+			ch, _ := state.Cabinet.Channel(update.ID)
+			if ch == nil {
+				continue
+			}
+
+			cpy := *ch
+			cpy.LastMessageID = update.LastMessageID
+			state.ChannelSet(&cpy, true)
+		}
+	})
+
 	return readstate
 }
 
