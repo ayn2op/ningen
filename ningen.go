@@ -548,7 +548,9 @@ func (r *State) GuildIsUnread(guildID discord.GuildID, opts GuildUnreadOpts) Unr
 		if opts.Types != nil && !typeMap[ch.Type] {
 			continue
 		}
-		if s := r.ChannelIsUnread(ch.ID, opts.UnreadOpts); s > ind {
+		if s := r.ChannelIsUnread(ch.ID, opts.UnreadOpts); s == ChannelMentioned {
+			return s
+		} else if s > ind {
 			ind = s
 		}
 	}

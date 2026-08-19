@@ -24,6 +24,16 @@ func (s *countingRoleStore) Roles(guildID discord.GuildID) ([]discord.Role, erro
 	return s.RoleStore.Roles(guildID)
 }
 
+type countingChannelStore struct {
+	store.ChannelStore
+	reads int
+}
+
+func (s *countingChannelStore) Channel(channelID discord.ChannelID) (*discord.Channel, error) {
+	s.reads++
+	return s.ChannelStore.Channel(channelID)
+}
+
 func TestLastMessagePrefersChannel(t *testing.T) {
 	const (
 		guildID          = discord.GuildID(1)
@@ -219,4 +229,82 @@ func channelIsUnreadPermissionFirst(s *State, channelID discord.ChannelID, opts 
 		return ChannelUnread
 	}
 	return ChannelRead
+}
+
+func TestGuildIsUnreadStopsAtMention(t *testing.T) {
+	s, channels := newMentionedGuildState(t, 3, 0)
+	if got := s.GuildIsUnread(1, GuildUnreadOpts{}); got != ChannelMentioned {
+		t.Fatalf("GuildIsUnread() = %v, want ChannelMentioned", got)
+	}
+	if channels.reads != 0 {
+		t.Fatalf("channels read after mention = %d, want 0", channels.reads)
+	}
+}
+
+func BenchmarkGuildIsUnreadMention(b *testing.B) {
+	for _, mention := range []int{0, 50, 99} {
+		b.Run(fmt.Sprintf("mention=%d", mention), func(b *testing.B) {
+			s, channels := newMentionedGuildState(b, 100, mention)
+			s.Cabinet.ChannelStore = channels.ChannelStore
+			b.Run("short_circuit", func(b *testing.B) {
+				for b.Loop() {
+					unreadSink = s.GuildIsUnread(1, GuildUnreadOpts{})
+				}
+			})
+			b.Run("full_scan", func(b *testing.B) {
+				for b.Loop() {
+					unreadSink = guildIsUnreadFullScan(s, 1)
+				}
+			})
+		})
+	}
+}
+
+func newMentionedGuildState(tb testing.TB, count, mention int) (*State, *countingChannelStore) {
+	tb.Helper()
+
+	const guildID = discord.GuildID(1)
+	readStates := make([]gateway.ReadState, count)
+	for i := range count {
+		channelID := discord.ChannelID(i + 2)
+		readStates[i] = gateway.ReadState{ChannelID: channelID, LastMessageID: 10}
+		if i == mention {
+			readStates[i].MentionCount = 1
+		}
+	}
+
+	s := FromState(state.NewWithStore("", defaultstore.New()))
+	s.State.Handler.Call(&gateway.ReadyEvent{
+		User: discord.User{ID: 1},
+		ReadyEventExtras: gateway.ReadyEventExtras{
+			ReadStates:        readStates,
+			UserGuildSettings: []gateway.UserGuildSetting{{GuildID: guildID, Muted: true}},
+		},
+	})
+	for i := range count {
+		channelID := discord.ChannelID(i + 2)
+		if err := s.Cabinet.ChannelSet(&discord.Channel{
+			ID: channelID, GuildID: guildID, LastMessageID: 10,
+		}, false); err != nil {
+			tb.Fatal(err)
+		}
+	}
+
+	channels := &countingChannelStore{ChannelStore: s.Cabinet.ChannelStore}
+	s.Cabinet.ChannelStore = channels
+	return s, channels
+}
+
+func guildIsUnreadFullScan(s *State, guildID discord.GuildID) UnreadIndication {
+	channels, _ := s.Cabinet.Channels(guildID)
+	indication := ChannelRead
+	for _, channel := range channels {
+		if unread := s.ChannelIsUnread(channel.ID, UnreadOpts{}); unread > indication {
+			indication = unread
+		}
+	}
+	if s.MutedState.Guild(guildID, false) && indication != ChannelMentioned {
+		return ChannelRead
+	}
+	return indication
 }
