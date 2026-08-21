@@ -24,8 +24,12 @@ func BlockParsers() []util.PrioritizedValue {
 
 // InlineParsers returns a list of inline parsers.
 func InlineParsers() []util.PrioritizedValue {
+	return inlineParsers(&emoji{})
+}
+
+func inlineParsers(emojiParser *emoji) []util.PrioritizedValue {
 	return []util.PrioritizedValue{
-		util.Prioritized(&emoji{}, 200), // (*emoji).Parse()
+		util.Prioritized(emojiParser, 200),
 		util.Prioritized(inlineCodeSpan{}, 300),
 		// util.Prioritized(parser.NewCodeSpanParser(), 300),
 		util.Prioritized(inline{}, 350),

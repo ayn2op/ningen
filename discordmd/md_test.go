@@ -6,8 +6,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ayn2op/arikawa/v3/discord"
+	"github.com/ayn2op/arikawa/v3/state/store"
 	"github.com/yuin/goldmark/ast"
 )
+
+var parseSink ast.Node
 
 func strcmp(t *testing.T, name, got, expected string) {
 	t.Helper()
@@ -28,6 +32,51 @@ func TestParses(t *testing.T) {
 	for _, test := range tests {
 		Parse([]byte(test))
 	}
+}
+
+func TestParseConcurrent(t *testing.T) {
+	for range 8 {
+		t.Run("worker", func(t *testing.T) {
+			t.Parallel()
+			for i := range 100 {
+				large := i%2 == 0
+				content := []byte("text <:wave:123>")
+				if large {
+					content = []byte("<:wave:123>")
+				}
+				if got := parsedEmojiLarge(Parse(content)); got != large {
+					t.Fatalf("large emoji = %v, want %v", got, large)
+				}
+			}
+		})
+	}
+}
+
+func parsedEmojiLarge(root ast.Node) bool {
+	var large bool
+	_ = ast.Walk(root, func(node ast.Node, entering bool) (ast.WalkStatus, error) {
+		if emoji, ok := node.(*Emoji); ok {
+			large = emoji.Large
+		}
+		return ast.WalkContinue, nil
+	})
+	return large
+}
+
+func BenchmarkParse(b *testing.B) {
+	content := []byte("hello **world** https://example.com `code` <:wave:123>")
+	b.Run("plain", func(b *testing.B) {
+		for b.Loop() {
+			parseSink = Parse(content)
+		}
+	})
+	b.Run("message_with_links", func(b *testing.B) {
+		message := &discord.Message{}
+		cabinet := store.Cabinet{}
+		for b.Loop() {
+			parseSink = ParseWithMessage(content, cabinet, message, false)
+		}
+	})
 }
 
 func dump(n ast.Node, src []byte) string {
