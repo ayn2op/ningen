@@ -1,5 +1,5 @@
-github.com/ayn2op/arikawa/v3 v3.0.0-20260818073432-f49cfbdeaecd h1:uXVZPx8arfvYQAHSfgjBo6zy2Yrn2eFi+VTRgPQQ/qA=
-github.com/ayn2op/arikawa/v3 v3.0.0-20260818073432-f49cfbdeaecd/go.mod h1:O0QAm4VBLKBF01sofDEsAHGfD8+Tk8iWNYWksojTt6A=
+github.com/ayn2op/arikawa/v3 v3.0.0-20260818212803-ea226484f0f9 h1:aCFnS+/kF7Yv/Vqb/Ax+1ZQ7l9OT7LB2Q3r7KHBqJf0=
+github.com/ayn2op/arikawa/v3 v3.0.0-20260818212803-ea226484f0f9/go.mod h1:O0QAm4VBLKBF01sofDEsAHGfD8+Tk8iWNYWksojTt6A=
 github.com/gorilla/schema v1.4.1 h1:jUg5hUjCSDZpNGLuXQOgIWGdlgrIdYvgQ0wZtdK1M3E=
 github.com/gorilla/schema v1.4.1/go.mod h1:Dg5SSm5PV60mhF2NFaTV1xuYYj8tV8NOPRo4FggUMnM=
 github.com/gorilla/websocket v1.5.3 h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aNNg=
