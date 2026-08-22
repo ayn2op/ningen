@@ -1,6 +1,6 @@
 module github.com/ayn2op/ningen/v3
 
-go 1.25.0
+go 1.27.0
 
 require (
 	github.com/ayn2op/arikawa/v3 v3.0.0-20260818212803-ea226484f0f9
