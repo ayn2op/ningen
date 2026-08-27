@@ -1,7 +1,9 @@
 package summary
 
 import (
-	"encoding/json"
+	jsonv1 "encoding/json"
+	"encoding/json/jsontext"
+	jsonv2 "encoding/json/v2"
 	"fmt"
 	"log/slog"
 	"os"
@@ -19,6 +21,8 @@ import (
 	"github.com/ayn2op/arikawa/v3/utils/ws"
 	"github.com/ayn2op/ningen/v3/handlerrepo"
 )
+
+var jsonOptions = jsonv1.DefaultOptionsV1()
 
 var maxSummaries atomic.Int64
 
@@ -101,7 +105,7 @@ func NewState(state *state.State, r handlerrepo.AddHandler) *State {
 		}
 
 		for _, summary := range u.Summaries {
-			data, err := json.Marshal(summary)
+			data, err := jsonv2.Marshal(summary, jsonOptions)
 			if err != nil {
 				slog.Warn(
 					"failed to marshal summary",
@@ -292,7 +296,7 @@ func readSummary(path string) (*gateway.ConversationSummary, error) {
 	defer f.Close()
 
 	var s gateway.ConversationSummary
-	if err := json.NewDecoder(f).Decode(&s); err != nil {
+	if err := jsonv2.UnmarshalDecode(jsontext.NewDecoder(f), &s, jsonOptions); err != nil {
 		return nil, fmt.Errorf("failed to decode summary: %w", err)
 	}
 
