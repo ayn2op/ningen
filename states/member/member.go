@@ -2,6 +2,7 @@ package member
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"slices"
@@ -15,7 +16,6 @@ import (
 	"github.com/ayn2op/arikawa/v3/state"
 	"github.com/ayn2op/arikawa/v3/utils/json/option"
 	"github.com/ayn2op/ningen/v3/handlerrepo"
-	"github.com/pkg/errors"
 	"github.com/twmb/murmur3"
 )
 
@@ -185,7 +185,7 @@ func (m *State) Subscribe(guildID discord.GuildID) {
 		})
 
 		if err != nil {
-			m.OnError(errors.Wrap(err, "Failed to subscribe guild"))
+			m.OnError(fmt.Errorf("Failed to subscribe guild: %w", err))
 
 			gd.mut.Lock()
 			gd.subscribed = false
@@ -229,7 +229,7 @@ func (m *State) SearchMember(guildID discord.GuildID, query string) {
 		err := m.state.SendGateway(context.Background(), search)
 
 		if err != nil {
-			m.OnError(errors.Wrap(err, "Failed to search guild members"))
+			m.OnError(fmt.Errorf("Failed to search guild members: %w", err))
 		}
 	}()
 }
@@ -300,7 +300,7 @@ func (m *State) RequestMember(guildID discord.GuildID, memberID discord.UserID) 
 			}
 			guild.mut.Unlock()
 
-			m.OnError(errors.Wrap(err, "Failed to request guild members"))
+			m.OnError(fmt.Errorf("Failed to request guild members: %w", err))
 			return
 		}
 
@@ -462,7 +462,7 @@ func (m *State) RequestMemberList(
 		})
 
 		if err != nil {
-			m.OnError(errors.Wrap(err, "Failed to subscribe to member list"))
+			m.OnError(fmt.Errorf("Failed to subscribe to member list: %w", err))
 		}
 	}()
 
@@ -477,7 +477,7 @@ func (m *State) GetMemberList(guildID discord.GuildID, channelID discord.Channel
 	// Compute Discord's magical member list ID thing.
 	c, err := m.state.Channel(channelID)
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to get channel permissions")
+		return nil, fmt.Errorf("Failed to get channel permissions: %w", err)
 	}
 
 	hv := ComputeListID(c.Overwrites)

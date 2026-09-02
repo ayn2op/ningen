@@ -26,7 +26,6 @@ import (
 	"github.com/ayn2op/ningen/v3/states/relationship"
 	"github.com/ayn2op/ningen/v3/states/summary"
 	"github.com/ayn2op/ningen/v3/states/thread"
-	"github.com/pkg/errors"
 )
 
 var cancelledCtx context.Context
@@ -439,12 +438,12 @@ func (s *State) HasPermissions(chID discord.ChannelID, perms discord.Permissions
 func (s *State) AssertPermissions(chID discord.ChannelID, perms discord.Permissions) error {
 	me, err := s.Me()
 	if err != nil {
-		return errors.Wrap(err, "cannot get current user information")
+		return fmt.Errorf("cannot get current user information: %w", err)
 	}
 
 	p, err := s.Permissions(chID, me.ID)
 	if err != nil {
-		return errors.Wrap(err, "cannot get permissions")
+		return fmt.Errorf("cannot get permissions: %w", err)
 	}
 
 	if !p.Has(perms) {
@@ -632,7 +631,7 @@ func (r *State) SetStatus(status discord.Status, custom *gateway.CustomUserStatu
 	}
 
 	if err := r.SendGateway(r.Context(), &cmd); err != nil {
-		return errors.Wrap(err, "cannot update gateway")
+		return fmt.Errorf("cannot update gateway: %w", err)
 	}
 
 	// Keep this the same as gateway.UserSettings.
@@ -641,8 +640,10 @@ func (r *State) SetStatus(status discord.Status, custom *gateway.CustomUserStatu
 		patchSettings["custom_status"] = custom
 	}
 
-	err := r.FastRequest("PATCH", api.EndpointMe+"/settings", httputil.WithJSONBody(patchSettings))
-	return errors.Wrap(err, "cannot update user settings API")
+	if err := r.FastRequest("PATCH", api.EndpointMe+"/settings", httputil.WithJSONBody(patchSettings)); err != nil {
+		return fmt.Errorf("cannot update user settings API: %w", err)
+	}
+	return nil
 }
 
 // SetAFK sets the current user's AFK status. If the user is AFK, then they will

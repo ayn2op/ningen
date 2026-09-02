@@ -14,16 +14,16 @@ Using ningen is similar to using `*state.State`, but you'd be handling around
 ```go
 s, err := state.New(os.Getenv("TOKEN"))
 if err != nil {
-	return errors.Wrap(err, "failed to create state")
+	return fmt.Errorf("failed to create state: %w", err)
 }
 
 n, err := ningen.FromState(s)
 if err != nil {
-	return errors.Wrap(err, "failed to wrap state")
+	return fmt.Errorf("failed to wrap state: %w", err)
 }
 
 if err := n.Open(); err != nil {
-	return errors.Wrap(err, "failed to open connection to Discord")
+	return fmt.Errorf("failed to open connection to Discord: %w", err)
 }
 
 return startApp(n)

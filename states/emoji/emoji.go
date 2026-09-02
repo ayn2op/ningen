@@ -1,11 +1,11 @@
 package emoji
 
 import (
+	"fmt"
 	"slices"
 
 	"github.com/ayn2op/arikawa/v3/discord"
 	"github.com/ayn2op/arikawa/v3/state/store"
-	"github.com/pkg/errors"
 )
 
 type State struct {
@@ -51,12 +51,12 @@ func (s *State) ForGuild(guildID discord.GuildID) ([]Guild, error) {
 
 	g, err := s.cab.Guild(guildID)
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to get guild")
+		return nil, fmt.Errorf("Failed to get guild: %w", err)
 	}
 
 	emojis, err := s.cab.Emojis(guildID)
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to get emojis")
+		return nil, fmt.Errorf("Failed to get emojis: %w", err)
 	}
 
 	filtered := emojis[:0]
@@ -83,7 +83,7 @@ func (s *State) AllEmojis() ([]Guild, error) {
 	// User has Nitro, grab all emojis.
 	guilds, err := s.cab.Guilds()
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to get guilds")
+		return nil, fmt.Errorf("Failed to get guilds: %w", err)
 	}
 
 	emojis := make([]Guild, 0, len(guilds))
