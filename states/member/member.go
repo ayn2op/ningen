@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"maps"
 	"slices"
 	"strconv"
 	"strings"
@@ -177,8 +178,7 @@ func (m *State) Subscribe(guildID discord.GuildID) {
 
 	go func() {
 		// Subscribe.
-		err := m.state.SendGateway(context.Background(), &gateway.GuildSubscribeCommand{
-			GuildID:    guildID,
+		err := m.subscribe(guildID, gateway.GuildSubscription{
 			Typing:     true,
 			Threads:    true,
 			Activities: true,
@@ -378,10 +378,12 @@ func (m *State) RequestMemberList(
 	// Get the list so we could calculate the total.
 	l, err := m.GetMemberList(guildID, channelID)
 	if err == nil {
-		total = l.TotalVisible()
+		// Group headers take rows in the list too.
+		rows := l.TotalVisible()
+		l.ViewGroups(func(groups []gateway.GuildMemberListGroup) { rows += len(groups) })
 
 		// Round the total up with ceiling.
-		total = (total) / 100
+		total = (rows + 99) / 100
 	}
 
 	// TODO: This won't be synchronized with the actual members list if we
@@ -420,8 +422,7 @@ func (m *State) RequestMemberList(
 	start = max(chunk-MaxMemberChunk, 1)
 
 	// Always keep the first chunk alive.
-	chunks := make([][2]int, 1, chunk-start+1)
-	chunks[0] = [2]int{0, 99}
+	chunks := [][2]int{{0, 99}}
 
 	// Start from the last one fetched.
 	for i := start; i < chunk; i++ {
@@ -451,14 +452,16 @@ func (m *State) RequestMemberList(
 		guild.subChannels[channelID] = chunks
 
 		guild.subscribed = true
+		// Copy the channels, which change once unlocked.
+		channels := maps.Clone(guild.subChannels)
 		guild.subMutex.Unlock() // Do not block IO.
 
 		// Subscribe.
-		err := m.state.SendGateway(context.Background(), &gateway.GuildSubscribeCommand{
-			GuildID:    guildID,
-			Channels:   guild.subChannels,
+		err := m.subscribe(guildID, gateway.GuildSubscription{
 			Typing:     true,
+			Threads:    true,
 			Activities: true,
+			Channels:   channels,
 		})
 
 		if err != nil {
@@ -467,6 +470,13 @@ func (m *State) RequestMemberList(
 	}()
 
 	return chunks
+}
+
+// subscribe updates the subscription of a guild.
+func (m *State) subscribe(guildID discord.GuildID, sub gateway.GuildSubscription) error {
+	return m.state.SendGateway(context.Background(), &gateway.GuildSubscriptionsBulkCommand{
+		Subscriptions: map[discord.GuildID]gateway.GuildSubscription{guildID: sub},
+	})
 }
 
 // GetMemberList looks up for the member list. It returns an error if no list
