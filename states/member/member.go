@@ -579,7 +579,7 @@ func (m *State) onListUpdate(ev *gateway.GuildMemberListUpdateEvent) {
 
 		case "DELETE":
 			// Copy the old item into the Items field for future uses.
-			op.Item = ml.items[i]
+			op.Item = ml.items[oi]
 			ev.Ops[i] = op
 			// Actually delete the item.
 			ml.items = slices.Delete(ml.items, oi, oi+1)
@@ -638,6 +638,10 @@ func ComputeListID(overrides []discord.Overwrite) string {
 	if len(allows) == 0 && len(denies) == 0 {
 		return "everyone"
 	}
+
+	// Discord hashes the IDs in ascending order.
+	slices.Sort(allows)
+	slices.Sort(denies)
 
 	var input = make([]string, 0, len(allows)+len(denies))
 	for _, a := range allows {

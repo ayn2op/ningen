@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"slices"
 	"testing"
 
 	"github.com/ayn2op/arikawa/v3/discord"
@@ -105,5 +106,11 @@ func TestComputeListID(t *testing.T) {
 
 	if id := ComputeListID(perms); id != "3720633681" {
 		t.Fatal("Unexpected ID:", id, "expected", "3720633681")
+	}
+
+	// The ID does not depend on the order of the overwrites.
+	slices.Reverse(perms)
+	if id := ComputeListID(perms); id != "3720633681" {
+		t.Fatal("Unexpected ID for reversed overwrites:", id, "expected", "3720633681")
 	}
 }
