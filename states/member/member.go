@@ -483,15 +483,28 @@ func (m *State) subscribe(guildID discord.GuildID, sub gateway.GuildSubscription
 //
 // Reference: https://luna.gitlab.io/discord-unofficial-docs/lazy_guilds.html
 func (m *State) GetMemberList(guildID discord.GuildID, channelID discord.ChannelID) (*List, error) {
-	// Compute Discord's magical member list ID thing.
 	c, err := m.state.Channel(channelID)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get channel permissions: %w", err)
 	}
 
-	hv := ComputeListID(c.Overwrites)
+	return m.GetMemberListDirect(guildID, m.ListID(c))
+}
 
-	return m.GetMemberListDirect(guildID, hv)
+// ListID returns the ID of the member list of a guild channel: "everyone" if the @everyone role can view the channel, or else the hash of its overwrites.
+func (m *State) ListID(channel *discord.Channel) string {
+	if role, err := m.state.Cabinet.Role(channel.GuildID, discord.RoleID(channel.GuildID)); err == nil {
+		perms := role.Permissions
+		for _, o := range channel.Overwrites {
+			if o.ID == discord.Snowflake(channel.GuildID) {
+				perms = perms&^o.Deny | o.Allow
+			}
+		}
+		if perms.Has(discord.PermissionViewChannel) {
+			return "everyone"
+		}
+	}
+	return ComputeListID(channel.Overwrites)
 }
 
 // GetMemberListDirect gets the guild's member list directly from the list's ID.

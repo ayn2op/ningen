@@ -138,3 +138,25 @@ func TestRequestMemberList(t *testing.T) {
 		}
 	}
 }
+
+func TestStateListID(t *testing.T) {
+	const guildID = 10
+	s := state.New("")
+	s.Cabinet.RoleSet(guildID, &discord.Role{ID: guildID, Permissions: discord.PermissionViewChannel}, false)
+	m := NewState(s, s.Handler)
+
+	for _, tt := range []struct {
+		name       string
+		overwrites []discord.Overwrite
+		want       string
+	}{
+		{"everyone allowed", []discord.Overwrite{{ID: guildID, Type: discord.OverwriteRole, Allow: discord.PermissionViewChannel}}, "everyone"},
+		{"everyone denied", []discord.Overwrite{{ID: guildID, Type: discord.OverwriteRole, Deny: discord.PermissionViewChannel}}, ComputeListID([]discord.Overwrite{{ID: guildID, Deny: discord.PermissionViewChannel}})},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := m.ListID(&discord.Channel{GuildID: guildID, Overwrites: tt.overwrites}); got != tt.want {
+				t.Fatalf("ListID() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
