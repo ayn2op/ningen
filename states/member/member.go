@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"maps"
 	"slices"
 	"strconv"
 	"strings"
@@ -58,7 +57,8 @@ type State struct {
 	guilds  map[discord.GuildID]*Guild // snowflake -> *Guild
 
 	minFetchMu sync.Mutex
-	minFetched map[discord.ChannelID]int
+	// minFetched holds the channel and chunk of each guild's member list subscription.
+	minFetched map[discord.GuildID]fetched
 
 	OnError func(error)
 
@@ -75,7 +75,7 @@ func NewState(state *state.State, h handlerrepo.AddHandler) *State {
 	s := &State{
 		state:      state,
 		guilds:     map[discord.GuildID]*Guild{},
-		minFetched: map[discord.ChannelID]int{},
+		minFetched: map[discord.GuildID]fetched{},
 		OnError: func(err error) {
 			slog.Warn(
 				"error occurred while handling member list",
@@ -332,15 +332,18 @@ func (m *State) GetMemberListChunk(guildID discord.GuildID, channelID discord.Ch
 	m.minFetchMu.Lock()
 	defer m.minFetchMu.Unlock()
 
-	ck, ok := m.minFetched[channelID]
-	if !ok {
+	f, ok := m.minFetched[guildID]
+	if !ok || f.channelID != channelID {
 		return -1
 	}
 
-	return ck
+	return f.chunk
 }
 
-var firstChunk = [][2]int{{0, 99}}
+type fetched struct {
+	channelID discord.ChannelID
+	chunk     int
+}
 
 // chunkEq compares the two chunks.
 func chunkEq(chk1, chk2 [][2]int) bool {
@@ -391,17 +394,19 @@ func (m *State) RequestMemberList(
 	m.minFetchMu.Lock()
 	defer m.minFetchMu.Unlock()
 
-	// Chunk to start.
-	start, ok := m.minFetched[channelID]
-	// Check if we've already had this chunk.
-	if ok && chunk == start {
+	// Chunk to start, if the channel is the one subscribed in the guild.
+	var start int
+	if f, ok := m.minFetched[guildID]; ok && f.channelID == channelID {
 		// We should always keep the current chunk and next chunk alive. As
 		// such, we need an equal check.
-		return nil
+		if chunk == f.chunk {
+			return nil
+		}
+		start = f.chunk
 	}
 
 	// Update the current chunks.
-	m.minFetched[channelID] = chunk
+	m.minFetched[guildID] = fetched{channelID: channelID, chunk: chunk}
 
 	// Increment chunk by one, similar to how we add 1 into index for the
 	// length.
@@ -443,17 +448,11 @@ func (m *State) RequestMemberList(
 			return
 		}
 
-		for id := range guild.subChannels {
-			// Reset the chunks.
-			guild.subChannels[id] = firstChunk
-		}
-
-		// Set this channel's chunk to be different.
-		guild.subChannels[channelID] = chunks
+		// Subscribe to this channel only, as Discord rejects subscriptions to too many channels.
+		guild.subChannels = map[discord.ChannelID][][2]int{channelID: chunks}
+		channels := guild.subChannels
 
 		guild.subscribed = true
-		// Copy the channels, which change once unlocked.
-		channels := maps.Clone(guild.subChannels)
 		guild.subMutex.Unlock() // Do not block IO.
 
 		// Subscribe.

@@ -114,3 +114,27 @@ func TestComputeListID(t *testing.T) {
 		t.Fatal("Unexpected ID for reversed overwrites:", id, "expected", "3720633681")
 	}
 }
+
+func TestRequestMemberList(t *testing.T) {
+	s := state.New("")
+	s.Cabinet.ChannelSet(&discord.Channel{ID: 1, GuildID: 10}, false)
+	s.Cabinet.ChannelSet(&discord.Channel{ID: 2, GuildID: 10}, false)
+	m := NewState(s, s.Handler)
+	// The gateway is closed, so the subscriptions fail to send.
+	m.OnError = func(error) {}
+
+	for _, tt := range []struct {
+		channelID discord.ChannelID
+		want      bool
+	}{
+		{1, true},
+		{1, false},
+		{2, true},
+		// Returning to a channel subscribes to it again.
+		{1, true},
+	} {
+		if got := m.RequestMemberList(10, tt.channelID, 0) != nil; got != tt.want {
+			t.Fatalf("requested channel %d = %v, want %v", tt.channelID, got, tt.want)
+		}
+	}
+}
