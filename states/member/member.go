@@ -491,18 +491,12 @@ func (m *State) GetMemberList(guildID discord.GuildID, channelID discord.Channel
 	return m.GetMemberListDirect(guildID, m.ListID(c))
 }
 
-// ListID returns the ID of the member list of a guild channel: "everyone" if the @everyone role can view the channel, or else the hash of its overwrites.
+// ListID returns the ID of the member list of a guild channel as Discord computes it: "everyone" if the @everyone role can view channels and no overwrite denies viewing the channel, or else the hash of its overwrites.
 func (m *State) ListID(channel *discord.Channel) string {
-	if role, err := m.state.Cabinet.Role(channel.GuildID, discord.RoleID(channel.GuildID)); err == nil {
-		perms := role.Permissions
-		for _, o := range channel.Overwrites {
-			if o.ID == discord.Snowflake(channel.GuildID) {
-				perms = perms&^o.Deny | o.Allow
-			}
-		}
-		if perms.Has(discord.PermissionViewChannel) {
-			return "everyone"
-		}
+	role, err := m.state.Cabinet.Role(channel.GuildID, discord.RoleID(channel.GuildID))
+	denied := slices.ContainsFunc(channel.Overwrites, func(o discord.Overwrite) bool { return o.Deny.Has(discord.PermissionViewChannel) })
+	if err == nil && role.Permissions.Has(discord.PermissionViewChannel) && !denied {
+		return "everyone"
 	}
 	return ComputeListID(channel.Overwrites)
 }
@@ -635,34 +629,19 @@ func growItems(items *[]gateway.GuildMemberListOpItem, maxLen int) {
 	*items = append(*items, make([]gateway.GuildMemberListOpItem, delta)...)
 }
 
+// ComputeListID returns the hash of the overwrites that allow or deny viewing a channel, which Discord uses as a member list ID.
 func ComputeListID(overrides []discord.Overwrite) string {
-	var allows, denies []discord.Snowflake
-
+	var input []string
 	for _, perm := range overrides {
 		switch {
 		case perm.Allow.Has(discord.PermissionViewChannel):
-			allows = append(allows, perm.ID)
+			input = append(input, "allow:"+perm.ID.String())
 		case perm.Deny.Has(discord.PermissionViewChannel):
-			denies = append(denies, perm.ID)
+			input = append(input, "deny:"+perm.ID.String())
 		}
 	}
 
-	if len(allows) == 0 && len(denies) == 0 {
-		return "everyone"
-	}
-
-	// Discord hashes the IDs in ascending order.
-	slices.Sort(allows)
-	slices.Sort(denies)
-
-	var input = make([]string, 0, len(allows)+len(denies))
-	for _, a := range allows {
-		input = append(input, "allow:"+a.String())
-	}
-	for _, b := range denies {
-		input = append(input, "deny:"+b.String())
-	}
-
-	mm3Input := strings.Join(input, ",")
-	return strconv.FormatUint(uint64(murmur3.StringSum32(mm3Input)), 10)
+	// Discord hashes the entries sorted as text, so IDs of different lengths are not in numeric order.
+	slices.Sort(input)
+	return strconv.FormatUint(uint64(murmur3.StringSum32(strings.Join(input, ","))), 10)
 }

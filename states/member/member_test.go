@@ -113,6 +113,15 @@ func TestComputeListID(t *testing.T) {
 	if id := ComputeListID(perms); id != "3720633681" {
 		t.Fatal("Unexpected ID for reversed overwrites:", id, "expected", "3720633681")
 	}
+
+	// IDs of different lengths are sorted as text, as discord.py-self does.
+	perms = []discord.Overwrite{
+		{Type: discord.OverwriteRole, ID: 99999999999999999, Allow: discord.PermissionViewChannel},
+		{Type: discord.OverwriteRole, ID: 1000000000000000000, Allow: discord.PermissionViewChannel},
+	}
+	if id := ComputeListID(perms); id != "1908181601" {
+		t.Fatal("Unexpected ID for IDs of different lengths:", id, "expected", "1908181601")
+	}
 }
 
 func TestRequestMemberList(t *testing.T) {
@@ -143,18 +152,27 @@ func TestStateListID(t *testing.T) {
 	const guildID = 10
 	s := state.New("")
 	s.Cabinet.RoleSet(guildID, &discord.Role{ID: guildID, Permissions: discord.PermissionViewChannel}, false)
+	// In the other guild, the @everyone role cannot view channels.
+	s.Cabinet.RoleSet(guildID+1, &discord.Role{ID: guildID + 1}, false)
 	m := NewState(s, s.Handler)
 
 	for _, tt := range []struct {
 		name       string
+		guildID    discord.GuildID
 		overwrites []discord.Overwrite
 		want       string
 	}{
-		{"everyone allowed", []discord.Overwrite{{ID: guildID, Type: discord.OverwriteRole, Allow: discord.PermissionViewChannel}}, "everyone"},
-		{"everyone denied", []discord.Overwrite{{ID: guildID, Type: discord.OverwriteRole, Deny: discord.PermissionViewChannel}}, ComputeListID([]discord.Overwrite{{ID: guildID, Deny: discord.PermissionViewChannel}})},
+		{"no overwrites", guildID, nil, "everyone"},
+		{"everyone allowed", guildID, []discord.Overwrite{{ID: guildID, Type: discord.OverwriteRole, Allow: discord.PermissionViewChannel}}, "everyone"},
+		{"everyone denied", guildID, []discord.Overwrite{{ID: guildID, Type: discord.OverwriteRole, Deny: discord.PermissionViewChannel}}, ComputeListID([]discord.Overwrite{{ID: guildID, Deny: discord.PermissionViewChannel}})},
+		{"role allowed", guildID, []discord.Overwrite{{ID: 2, Type: discord.OverwriteRole, Allow: discord.PermissionViewChannel}}, "everyone"},
+		{"role denied", guildID, []discord.Overwrite{{ID: 2, Type: discord.OverwriteRole, Deny: discord.PermissionViewChannel}}, ComputeListID([]discord.Overwrite{{ID: 2, Deny: discord.PermissionViewChannel}})},
+		// Like Discord, an @everyone overwrite that allows viewing does not make the list "everyone".
+		{"everyone cannot view", guildID + 1, nil, "0"},
+		{"everyone cannot view but is allowed", guildID + 1, []discord.Overwrite{{ID: guildID + 1, Type: discord.OverwriteRole, Allow: discord.PermissionViewChannel}}, ComputeListID([]discord.Overwrite{{ID: guildID + 1, Allow: discord.PermissionViewChannel}})},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := m.ListID(&discord.Channel{GuildID: guildID, Overwrites: tt.overwrites}); got != tt.want {
+			if got := m.ListID(&discord.Channel{GuildID: tt.guildID, Overwrites: tt.overwrites}); got != tt.want {
 				t.Fatalf("ListID() = %q, want %q", got, tt.want)
 			}
 		})
