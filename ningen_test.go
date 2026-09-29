@@ -177,6 +177,7 @@ func newUnreadTestState(tb testing.TB, acked, latest discord.MessageID) (*State,
 	s := FromState(state.NewWithStore("", defaultstore.New()))
 	s.State.Handler.Call(&gateway.ReadyEvent{
 		User: discord.User{ID: userID},
+		ReadStates: []gateway.ReadState{{
 			ChannelID: channelID, LastMessageID: acked,
 		}},
 	})
@@ -274,9 +275,9 @@ func newMentionedGuildState(tb testing.TB, count, mention int) (*State, *countin
 
 	s := FromState(state.NewWithStore("", defaultstore.New()))
 	s.State.Handler.Call(&gateway.ReadyEvent{
-		User: discord.User{ID: 1},
-			ReadStates:        readStates,
-			UserGuildSettings: []gateway.UserGuildSetting{{GuildID: guildID, Muted: true}},
+		User:              discord.User{ID: 1},
+		ReadStates:        readStates,
+		UserGuildSettings: []gateway.UserGuildSetting{{GuildID: guildID, Muted: true}},
 	})
 	for i := range count {
 		channelID := discord.ChannelID(i + 2)
