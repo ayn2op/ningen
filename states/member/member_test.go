@@ -19,7 +19,7 @@ type mockNingen struct {
 }
 
 func ningenFromState(s *state.State) *mockNingen {
-	return &mockNingen{s, NewState(s, s)}
+	return &mockNingen{s, NewState(s, s.Handler)}
 }
 
 const (
@@ -34,7 +34,7 @@ func ExampleState_RequestMemberList() {
 	n := ningenFromState(s)
 
 	updates := make(chan *gateway.GuildMemberListUpdateEvent, 1)
-	n.AddHandler(updates)
+	n.AddChanHandler(updates)
 
 	if err := n.Open(context.TODO()); err != nil {
 		panic(err)

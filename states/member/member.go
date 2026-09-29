@@ -14,8 +14,8 @@ import (
 	"github.com/ayn2op/arikawa/v3/discord"
 	"github.com/ayn2op/arikawa/v3/gateway"
 	"github.com/ayn2op/arikawa/v3/state"
+	"github.com/ayn2op/arikawa/v3/utils/handler"
 	"github.com/ayn2op/arikawa/v3/utils/json/option"
-	"github.com/ayn2op/ningen/v3/handlerrepo"
 	"github.com/twmb/murmur3"
 )
 
@@ -71,7 +71,7 @@ type State struct {
 	RequestPresences bool // true
 }
 
-func NewState(state *state.State, h handlerrepo.AddHandler) *State {
+func NewState(state *state.State, h *handler.Handler) *State {
 	s := &State{
 		state:      state,
 		guilds:     map[discord.GuildID]*Guild{},

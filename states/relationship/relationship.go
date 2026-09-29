@@ -7,7 +7,7 @@ import (
 	"github.com/ayn2op/arikawa/v3/discord"
 	"github.com/ayn2op/arikawa/v3/gateway"
 	"github.com/ayn2op/arikawa/v3/state/store"
-	"github.com/ayn2op/ningen/v3/handlerrepo"
+	"github.com/ayn2op/arikawa/v3/utils/handler"
 )
 
 type State struct {
@@ -15,7 +15,7 @@ type State struct {
 	relationships map[discord.UserID]discord.Relationship
 }
 
-func NewState(store store.PresenceStore, r handlerrepo.AddHandler) *State {
+func NewState(store store.PresenceStore, r *handler.Handler) *State {
 	state := &State{
 		relationships: map[discord.UserID]discord.Relationship{},
 	}

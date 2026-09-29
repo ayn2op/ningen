@@ -4,38 +4,31 @@ import (
 	"github.com/ayn2op/arikawa/v3/utils/handler"
 )
 
-// AddHandler is an interface for separate states to bind their handlers.
-type AddHandler interface {
-	AddHandler(fn any) (cancel func())
-	AddSyncHandler(fn any) (cancel func())
-}
-
-var _ AddHandler = (*handler.Handler)(nil)
-
 // Unbinder is an interface for separate states to remove their handlers.
 type Unbinder interface {
 	Unbind()
 }
 
+// Repository wraps a handler and keeps track of the handlers added through it, so that they can all be removed at once with Unbind.
 type Repository struct {
-	adder  AddHandler
-	cancel []func()
+	handler *handler.Handler
+	cancel  []func()
 }
 
-func NewRepository(adder AddHandler) *Repository {
+func NewRepository(h *handler.Handler) *Repository {
 	return &Repository{
-		adder: adder,
+		handler: h,
 	}
 }
 
-func (r *Repository) AddHandler(fn any) (cancel func()) {
-	cancel = r.adder.AddHandler(fn)
+func (r *Repository) AddHandler[E any](fn func(E)) (cancel func()) {
+	cancel = r.handler.AddHandler(fn)
 	r.cancel = append(r.cancel, cancel)
 	return
 }
 
-func (r *Repository) AddSyncHandler(fn any) (cancel func()) {
-	cancel = r.adder.AddSyncHandler(fn)
+func (r *Repository) AddSyncHandler[E any](fn func(E)) (cancel func()) {
+	cancel = r.handler.AddSyncHandler(fn)
 	r.cancel = append(r.cancel, cancel)
 	return
 }

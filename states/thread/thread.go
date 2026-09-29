@@ -8,7 +8,7 @@ import (
 	"github.com/ayn2op/arikawa/v3/gateway"
 	"github.com/ayn2op/arikawa/v3/state"
 	"github.com/ayn2op/arikawa/v3/state/store"
-	"github.com/ayn2op/ningen/v3/handlerrepo"
+	"github.com/ayn2op/arikawa/v3/utils/handler"
 )
 
 // State contains additional thread states that are not in the built-in state
@@ -21,7 +21,7 @@ type State struct {
 	joined   map[discord.ChannelID]struct{}
 }
 
-func NewState(state *state.State, h handlerrepo.AddHandler) *State {
+func NewState(state *state.State, h *handler.Handler) *State {
 	s := &State{
 		state:   state,
 		cabinet: state.Cabinet,

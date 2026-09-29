@@ -9,8 +9,8 @@ import (
 	"github.com/ayn2op/arikawa/v3/discord"
 	"github.com/ayn2op/arikawa/v3/gateway"
 	"github.com/ayn2op/arikawa/v3/state"
+	"github.com/ayn2op/arikawa/v3/utils/handler"
 	"github.com/ayn2op/arikawa/v3/utils/ws"
-	"github.com/ayn2op/ningen/v3/handlerrepo"
 )
 
 type UpdateEvent struct {
@@ -32,7 +32,7 @@ type State struct {
 	selfID discord.UserID
 }
 
-func NewState(state *state.State, r handlerrepo.AddHandler) *State {
+func NewState(state *state.State, r *handler.Handler) *State {
 	readstate := &State{
 		state:  state,
 		states: make(map[discord.ChannelID]*gateway.ReadState),

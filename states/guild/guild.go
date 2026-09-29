@@ -6,7 +6,7 @@ import (
 
 	"github.com/ayn2op/arikawa/v3/discord"
 	"github.com/ayn2op/arikawa/v3/gateway"
-	"github.com/ayn2op/ningen/v3/handlerrepo"
+	"github.com/ayn2op/arikawa/v3/utils/handler"
 )
 
 // State contains additional guild states that are only available on join.
@@ -15,7 +15,7 @@ type State struct {
 	joins map[discord.GuildID]time.Time
 }
 
-func NewState(h handlerrepo.AddHandler) *State {
+func NewState(h *handler.Handler) *State {
 	s := &State{joins: make(map[discord.GuildID]time.Time)}
 
 	h.AddSyncHandler(func(r *gateway.ReadyEvent) {

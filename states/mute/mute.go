@@ -9,7 +9,7 @@ import (
 	"github.com/ayn2op/arikawa/v3/discord"
 	"github.com/ayn2op/arikawa/v3/gateway"
 	"github.com/ayn2op/arikawa/v3/state/store"
-	"github.com/ayn2op/ningen/v3/handlerrepo"
+	"github.com/ayn2op/arikawa/v3/utils/handler"
 )
 
 // State implements a queryable channel and guild mute state.
@@ -21,7 +21,7 @@ type State struct {
 	channels map[discord.ChannelID]gateway.UserChannelOverride
 }
 
-func NewState(cab *store.Cabinet, r handlerrepo.AddHandler) *State {
+func NewState(cab *store.Cabinet, r *handler.Handler) *State {
 	mute := &State{
 		cab:      cab,
 		guilds:   make(map[discord.GuildID]gateway.UserGuildSetting),

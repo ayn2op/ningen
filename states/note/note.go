@@ -6,7 +6,7 @@ import (
 	"github.com/ayn2op/arikawa/v3/discord"
 	"github.com/ayn2op/arikawa/v3/gateway"
 	"github.com/ayn2op/arikawa/v3/state"
-	"github.com/ayn2op/ningen/v3/handlerrepo"
+	"github.com/ayn2op/arikawa/v3/utils/handler"
 )
 
 type State struct {
@@ -16,7 +16,7 @@ type State struct {
 	fetching map[discord.UserID]struct{}
 }
 
-func NewState(state *state.State, r handlerrepo.AddHandler) *State {
+func NewState(state *state.State, r *handler.Handler) *State {
 	noteState := &State{
 		state:    state,
 		notes:    map[discord.UserID]string{},

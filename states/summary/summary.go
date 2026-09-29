@@ -18,8 +18,8 @@ import (
 	"github.com/ayn2op/arikawa/v3/discord"
 	"github.com/ayn2op/arikawa/v3/gateway"
 	"github.com/ayn2op/arikawa/v3/state"
+	"github.com/ayn2op/arikawa/v3/utils/handler"
 	"github.com/ayn2op/arikawa/v3/utils/ws"
-	"github.com/ayn2op/ningen/v3/handlerrepo"
 )
 
 var jsonOptions = jsonv1.DefaultOptionsV1()
@@ -48,7 +48,7 @@ type State struct {
 	summaries map[discord.ChannelID][]gateway.ConversationSummary
 }
 
-func NewState(state *state.State, r handlerrepo.AddHandler) *State {
+func NewState(state *state.State, r *handler.Handler) *State {
 	s := &State{
 		state:     state,
 		summaries: make(map[discord.ChannelID][]gateway.ConversationSummary),
