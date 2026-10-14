@@ -94,3 +94,44 @@ func TestMarkReadAcksUncachedChannelCursor(t *testing.T) {
 		t.Fatal("MarkRead did not acknowledge an uncached channel cursor")
 	}
 }
+
+func TestStateReadState(t *testing.T) {
+	// read returns the state of user 4, who has read message 3 of forum 2, after events.
+	read := func(t *testing.T, events ...any) *State {
+		t.Helper()
+		cabinet := defaultstore.New()
+		if err := cabinet.ChannelSet(&discord.Channel{ID: 2, GuildID: 1, Type: discord.GuildForum}, false); err != nil {
+			t.Fatal(err)
+		}
+
+		h := handler.New()
+		s := NewState(&state.State{Cabinet: cabinet, Handler: handler.New()}, h)
+
+		ready := &gateway.ReadyEvent{User: discord.User{ID: 4}}
+		ready.ReadStates = []gateway.ReadState{{ChannelID: 2, LastMessageID: 3, MentionCount: 1}}
+		for _, event := range append([]any{ready}, events...) {
+			h.Call(event)
+		}
+
+		return s
+	}
+
+	created := func(ownerID discord.UserID, newlyCreated bool) *gateway.ThreadCreateEvent {
+		return &gateway.ThreadCreateEvent{Channel: discord.Channel{ID: 5, ParentID: 2, OwnerID: ownerID}, NewlyCreated: newlyCreated}
+	}
+
+	for name, tt := range map[string]struct {
+		event *gateway.ThreadCreateEvent
+		want  discord.MessageID
+	}{
+		"creating a thread in a forum reads the forum up to it":    {created(4, true), 5},
+		"a thread someone else created leaves the forum as it was": {created(9, true), 3},
+		"being added to a thread leaves the forum as it was":       {created(4, false), 3},
+	} {
+		t.Run(name, func(t *testing.T) {
+			if got := read(t, tt.event).ReadState(2).LastMessageID; got != tt.want {
+				t.Fatalf("LastMessageID = %d, want %d", got, tt.want)
+			}
+		})
+	}
+}

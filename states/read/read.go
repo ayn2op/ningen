@@ -79,6 +79,18 @@ func NewState(state *state.State, r *handler.Handler) *State {
 		readstate.MarkUnread(c.ChannelID, c.ID, mentions)
 	})
 
+	r.AddSyncHandler(func(c *gateway.ThreadCreateEvent) {
+		// Discord reads the forum we created a thread in without sending an
+		// ack for it.
+		if !c.NewlyCreated || c.OwnerID != readstate.SelfID() {
+			return
+		}
+
+		if parent, _ := state.Cabinet.Channel(c.ParentID); parent != nil && parent.Type == discord.GuildForum {
+			readstate.markRead(c.ParentID, discord.MessageID(c.ID), false)
+		}
+	})
+
 	r.AddSyncHandler(func(u *gateway.ChannelUnreadUpdateEvent) {
 		for _, update := range u.ChannelUnreadUpdates {
 			ch, _ := state.Cabinet.Channel(update.ID)
