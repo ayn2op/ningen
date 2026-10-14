@@ -306,3 +306,51 @@ func guildIsUnreadFullScan(s *State, guildID discord.GuildID) UnreadIndication {
 	}
 	return indication
 }
+
+func TestStateChannelIsMuted(t *testing.T) {
+	// The guild has channels 10, which is muted, and 20. We have joined the threads 11 of channel 10 and 21 and 22 of
+	// channel 20, of which we muted 22, but not thread 23.
+	s := FromState(state.NewWithStore("", defaultstore.New()))
+	thread := func(id, parentID discord.ChannelID, member *discord.ThreadMember) discord.Channel {
+		return discord.Channel{ID: id, GuildID: 1, ParentID: parentID, Type: discord.GuildAnnouncementThread, ThreadMember: member}
+	}
+
+	joined := []discord.Channel{
+		thread(11, 10, &discord.ThreadMember{}),
+		thread(21, 20, &discord.ThreadMember{}),
+		thread(22, 20, &discord.ThreadMember{Muted: true}),
+	}
+
+	ready := &gateway.ReadyEvent{User: discord.User{ID: 3}}
+	ready.Guilds = []gateway.GuildCreateEvent{{Threads: joined}}
+	ready.UserGuildSettings = []gateway.UserGuildSetting{{
+		GuildID:          1,
+		ChannelOverrides: []gateway.UserChannelOverride{{ChannelID: 10, Muted: true}},
+	}}
+	s.State.Handler.Call(ready)
+
+	for _, channel := range append(joined, discord.Channel{ID: 10, GuildID: 1}, discord.Channel{ID: 20, GuildID: 1}, thread(23, 20, nil)) {
+		if err := s.Cabinet.ChannelSet(&channel, false); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	for name, tt := range map[string]struct {
+		thread discord.ChannelID
+		want   bool
+	}{
+		"a joined thread is not muted":                 {21, false},
+		"a thread we muted is muted":                   {22, true},
+		"a thread we have not joined is muted":         {23, true},
+		"a thread of a muted channel is muted with it": {11, true},
+	} {
+		t.Run(name, func(t *testing.T) {
+			// Whether muted categories count does not change what a thread takes from its channel.
+			for _, include := range []bool{false, true} {
+				if got := s.ChannelIsMuted(tt.thread, UnreadOpts{IncludeMutedCategories: include}); got != tt.want {
+					t.Fatalf("ChannelIsMuted(%d) = %v, want %v", tt.thread, got, tt.want)
+				}
+			}
+		})
+	}
+}

@@ -685,7 +685,7 @@ func (r *State) UserIsBlocked(uID discord.UserID) bool {
 }
 
 // ChannelIsMuted returns true if the channel with the given ID is muted or if
-// it's in a category that's muted.
+// it's in a category that's muted. A thread is also muted with its channel.
 func (r *State) ChannelIsMuted(chID discord.ChannelID, opts UnreadOpts) bool {
 	// If the channel is configured to be muted, then it's muted.
 	if r.MutedState.Channel(chID) {
@@ -702,12 +702,11 @@ func (r *State) ChannelIsMuted(chID discord.ChannelID, opts UnreadOpts) bool {
 		return false
 	}
 
-	// Is the channel a thread? If so, check if the thread is joined.
-	switch c.Type {
-	case discord.GuildPublicThread, discord.GuildPrivateThread:
-		if !r.ThreadState.ThreadIsJoined(c.ID) {
-			return true
-		}
+	// A thread is muted if we have not joined it, if we muted it, or if the
+	// channel it is in is muted.
+	if c.Type.IsThread() {
+		member, joined := r.ThreadState.ThreadMember(c.ID)
+		return !joined || member.Muted || r.ChannelIsMuted(c.ParentID, opts)
 	}
 
 	// If the channel is in a category, then check if the category is muted.
