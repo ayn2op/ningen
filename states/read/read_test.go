@@ -120,6 +120,17 @@ func TestStateReadState(t *testing.T) {
 		return &gateway.ThreadCreateEvent{Channel: discord.Channel{ID: 5, ParentID: 2, OwnerID: ownerID}, NewlyCreated: newlyCreated}
 	}
 
+	t.Run("a deleted channel or thread leaves no read state", func(t *testing.T) {
+		for _, event := range []any{
+			&gateway.ChannelDeleteEvent{Channel: discord.Channel{ID: 2}},
+			&gateway.ThreadDeleteEvent{ID: 2},
+		} {
+			if got := read(t, event).ReadState(2); got != nil {
+				t.Fatalf("%T: read state = %+v, want none", event, got)
+			}
+		}
+	})
+
 	for name, tt := range map[string]struct {
 		event *gateway.ThreadCreateEvent
 		want  discord.MessageID

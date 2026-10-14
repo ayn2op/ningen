@@ -91,6 +91,15 @@ func NewState(state *state.State, r *handler.Handler) *State {
 		}
 	})
 
+	// A channel or thread that is deleted leaves no read state behind.
+	r.AddSyncHandler(func(c *gateway.ChannelDeleteEvent) {
+		readstate.remove(c.ID)
+	})
+
+	r.AddSyncHandler(func(c *gateway.ThreadDeleteEvent) {
+		readstate.remove(c.ID)
+	})
+
 	r.AddSyncHandler(func(u *gateway.ChannelUnreadUpdateEvent) {
 		for _, update := range u.ChannelUnreadUpdates {
 			ch, _ := state.Cabinet.Channel(update.ID)
@@ -105,6 +114,13 @@ func NewState(state *state.State, r *handler.Handler) *State {
 	})
 
 	return readstate
+}
+
+func (r *State) remove(channelID discord.ChannelID) {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
+	delete(r.states, channelID)
 }
 
 func (r *State) SelfID() discord.UserID {
