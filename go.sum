@@ -1,7 +1,5 @@
-github.com/ayn2op/arikawa/v3 v3.0.0-20261014002739-596a02ea9e65 h1:Q5OgixhtizcziEwqZcBGa2ckB6W9Q3Khv427pvz+svA=
-github.com/ayn2op/arikawa/v3 v3.0.0-20261014002739-596a02ea9e65/go.mod h1:YARcqZmk7hDjXB+lexlXX4wDFHULafbGnF0gsD0tuNw=
-github.com/ayn2op/arikawa/v3 v3.0.0-20261014032627-812859536c29 h1:BG3H1+IGPVeYrmqjWl2pisDIbdOPpbJuza8X/xry0Is=
-github.com/ayn2op/arikawa/v3 v3.0.0-20261014032627-812859536c29/go.mod h1:YARcqZmk7hDjXB+lexlXX4wDFHULafbGnF0gsD0tuNw=
+github.com/ayn2op/arikawa/v3 v3.0.0-20261014035141-32b58d8f3755 h1:XHo9kizImaAEtJJky4GZOBTalze42GIVDViqirjuPBY=
+github.com/ayn2op/arikawa/v3 v3.0.0-20261014035141-32b58d8f3755/go.mod h1:YARcqZmk7hDjXB+lexlXX4wDFHULafbGnF0gsD0tuNw=
 github.com/gorilla/schema v1.4.1 h1:jUg5hUjCSDZpNGLuXQOgIWGdlgrIdYvgQ0wZtdK1M3E=
 github.com/gorilla/schema v1.4.1/go.mod h1:Dg5SSm5PV60mhF2NFaTV1xuYYj8tV8NOPRo4FggUMnM=
 github.com/gorilla/websocket v1.5.3 h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aNNg=
