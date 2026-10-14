@@ -253,7 +253,7 @@ func (s *State) MessageMentions(msg *discord.Message) MessageMentionFlags {
 	}
 
 	// Check channel settings. Channel settings override guilds.
-	mutedCh := s.MutedState.ChannelOverrides(msg.ChannelID)
+	mutedCh := s.channelOverrides(msg.ChannelID)
 
 	switch mutedCh.Notifications {
 	case gateway.NoNotifications:
@@ -305,6 +305,31 @@ func (s *State) MessageMentions(msg *discord.Message) MessageMentionFlags {
 	}
 
 	return flags
+}
+
+// channelOverrides returns the notification settings of the given channel.
+// Those of a thread are the ones of the channel it is in, but for what our
+// member of the thread sets.
+func (s *State) channelOverrides(chID discord.ChannelID) gateway.UserChannelOverride {
+	ch, _ := s.Cabinet.Channel(chID)
+	if ch == nil || !ch.Type.IsThread() {
+		return s.MutedState.ChannelOverrides(chID)
+	}
+
+	overrides := s.MutedState.ChannelOverrides(ch.ParentID)
+	member, _ := s.ThreadState.ThreadMember(chID)
+	overrides.Muted = overrides.Muted || member.Muted
+
+	switch {
+	case member.Flags&discord.ThreadMemberAllMessages != 0:
+		overrides.Notifications = gateway.AllNotifications
+	case member.Flags&discord.ThreadMemberOnlyMentions != 0:
+		overrides.Notifications = gateway.OnlyMentions
+	case member.Flags&discord.ThreadMemberNoMessages != 0:
+		overrides.Notifications = gateway.NoNotifications
+	}
+
+	return overrides
 }
 
 func messageMentions(msg *discord.Message, uID discord.UserID) bool {

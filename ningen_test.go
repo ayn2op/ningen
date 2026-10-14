@@ -354,3 +354,50 @@ func TestStateChannelIsMuted(t *testing.T) {
 		})
 	}
 }
+
+func TestStateMessageMentions(t *testing.T) {
+	// mentions returns what a message that mentions us or not in thread 21 of channel 20 does, with flags on our member of the thread.
+	mentions := func(t *testing.T, flags discord.ThreadMemberFlags, mentioned bool) MessageMentionFlags {
+		t.Helper()
+		s := FromState(state.NewWithStore("", defaultstore.New()))
+		thread := discord.Channel{ID: 21, GuildID: 1, ParentID: 20, Type: discord.GuildPublicThread, ThreadMember: &discord.ThreadMember{Flags: flags}}
+
+		ready := &gateway.ReadyEvent{User: discord.User{ID: 3}}
+		ready.Guilds = []gateway.GuildCreateEvent{{Threads: []discord.Channel{thread}}}
+		s.State.Handler.Call(ready)
+
+		if err := s.Cabinet.MyselfSet(discord.User{ID: 3}, false); err != nil {
+			t.Fatal(err)
+		}
+
+		for _, channel := range []discord.Channel{{ID: 20, GuildID: 1}, thread} {
+			if err := s.Cabinet.ChannelSet(&channel, false); err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		msg := &discord.Message{ChannelID: 21, GuildID: 1, Author: discord.User{ID: 4}}
+		if mentioned {
+			msg.Mentions = []discord.GuildUser{{User: discord.User{ID: 3}}}
+		}
+
+		return s.MessageMentions(msg)
+	}
+
+	for name, tt := range map[string]struct {
+		flags     discord.ThreadMemberFlags
+		mentioned bool
+		want      MessageMentionFlags
+	}{
+		"a thread set to no messages never notifies":        {discord.ThreadMemberNoMessages, true, 0},
+		"a thread set to mentions notifies of a mention":    {discord.ThreadMemberOnlyMentions, true, MessageMentions | MessageNotifies},
+		"a thread set to mentions is quiet without one":     {discord.ThreadMemberOnlyMentions, false, 0},
+		"a thread set to all messages notifies of each one": {discord.ThreadMemberAllMessages, false, MessageNotifies},
+	} {
+		t.Run(name, func(t *testing.T) {
+			if got := mentions(t, tt.flags, tt.mentioned); got != tt.want {
+				t.Fatalf("MessageMentions() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
