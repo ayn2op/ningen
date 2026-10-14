@@ -308,7 +308,7 @@ func guildIsUnreadFullScan(s *State, guildID discord.GuildID) UnreadIndication {
 }
 
 func TestStateChannelIsMuted(t *testing.T) {
-	// The guild has channels 10, which is muted, and 20. We have joined the threads 11 of channel 10 and 21 and 22 of
+	// The guild has channels 10, which is muted, and 20. We are members of the threads 11 of channel 10 and 21 and 22 of
 	// channel 20, of which we muted 22, but not thread 23.
 	s := FromState(state.NewWithStore("", defaultstore.New()))
 	thread := func(id, parentID discord.ChannelID, member *discord.ThreadMember) discord.Channel {
@@ -322,7 +322,6 @@ func TestStateChannelIsMuted(t *testing.T) {
 	}
 
 	ready := &gateway.ReadyEvent{User: discord.User{ID: 3}}
-	ready.Guilds = []gateway.GuildCreateEvent{{Threads: joined}}
 	ready.UserGuildSettings = []gateway.UserGuildSetting{{
 		GuildID:          1,
 		ChannelOverrides: []gateway.UserChannelOverride{{ChannelID: 10, Muted: true}},
@@ -361,10 +360,6 @@ func TestStateMessageMentions(t *testing.T) {
 		t.Helper()
 		s := FromState(state.NewWithStore("", defaultstore.New()))
 		thread := discord.Channel{ID: 21, GuildID: 1, ParentID: 20, Type: discord.GuildPublicThread, ThreadMember: &discord.ThreadMember{Flags: flags}}
-
-		ready := &gateway.ReadyEvent{User: discord.User{ID: 3}}
-		ready.Guilds = []gateway.GuildCreateEvent{{Threads: []discord.Channel{thread}}}
-		s.State.Handler.Call(ready)
 
 		if err := s.Cabinet.MyselfSet(discord.User{ID: 3}, false); err != nil {
 			t.Fatal(err)

@@ -3,7 +3,7 @@ module github.com/ayn2op/ningen/v3
 go 1.27.0
 
 require (
-	github.com/ayn2op/arikawa/v3 v3.0.0-20261014002739-596a02ea9e65
+	github.com/ayn2op/arikawa/v3 v3.0.0-20261014032627-812859536c29
 	github.com/twmb/murmur3 v1.2.1
 )
 

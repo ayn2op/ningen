@@ -25,7 +25,6 @@ import (
 	"github.com/ayn2op/ningen/v3/states/read"
 	"github.com/ayn2op/ningen/v3/states/relationship"
 	"github.com/ayn2op/ningen/v3/states/summary"
-	"github.com/ayn2op/ningen/v3/states/thread"
 )
 
 var cancelledCtx context.Context
@@ -51,7 +50,6 @@ type State struct {
 	GuildState        *guild.State
 	EmojiState        *emoji.State
 	MemberState       *member.State
-	ThreadState       *thread.State
 	SummaryState      *summary.State
 	RelationshipState *relationship.State
 
@@ -92,7 +90,6 @@ func FromState(s *state.State) *State {
 	state.GuildState = guild.NewState(prehandler)
 	state.EmojiState = emoji.NewState(s.Cabinet)
 	state.MemberState = member.NewState(s, prehandler)
-	state.ThreadState = thread.NewState(s, prehandler)
 	state.SummaryState = summary.NewState(s, prehandler)
 	state.RelationshipState = relationship.NewState(s.Cabinet, prehandler)
 
@@ -317,7 +314,11 @@ func (s *State) channelOverrides(chID discord.ChannelID) gateway.UserChannelOver
 	}
 
 	overrides := s.MutedState.ChannelOverrides(ch.ParentID)
-	member, _ := s.ThreadState.ThreadMember(chID)
+	var member discord.ThreadMember
+	if ch.ThreadMember != nil {
+		member = *ch.ThreadMember
+	}
+
 	overrides.Muted = overrides.Muted || member.Muted
 
 	switch {
@@ -730,8 +731,7 @@ func (r *State) ChannelIsMuted(chID discord.ChannelID, opts UnreadOpts) bool {
 	// A thread is muted if we have not joined it, if we muted it, or if the
 	// channel it is in is muted.
 	if c.Type.IsThread() {
-		member, joined := r.ThreadState.ThreadMember(c.ID)
-		return !joined || member.Muted || r.ChannelIsMuted(c.ParentID, opts)
+		return c.ThreadMember == nil || c.ThreadMember.Muted || r.ChannelIsMuted(c.ParentID, opts)
 	}
 
 	// If the channel is in a category, then check if the category is muted.
