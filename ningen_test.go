@@ -373,7 +373,7 @@ func TestStateMessageMentions(t *testing.T) {
 
 		msg := &discord.Message{ChannelID: 21, GuildID: 1, Author: discord.User{ID: 4}}
 		if mentioned {
-			msg.Mentions = []discord.GuildUser{{User: discord.User{ID: 3}}}
+			msg.Mentions = []discord.GuildUser{{ID: 3}}
 		}
 
 		return s.MessageMentions(msg)
